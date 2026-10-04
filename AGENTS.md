@@ -8,7 +8,8 @@
 | Completion | Run `pnpm run verify` and read its output before claiming completion. | Verification output |
 | Verification inventory | Chain every check from the root `verify` script; CI runs exactly `verify`. | `.github/workflows/verify.yaml` |
 | Test placement | Place package tests under `__tests__/` mirroring `src/`; shared fixtures live in `@flowmock/test-fixtures`. | Vitest configs |
-| Runtime independence | Keep `packages/*` free of Node built-ins, timers and globals; reach the runtime through the `Clock`, `HttpTransport`, `MessageTransport` and `CorpusStore` contracts. | ESLint |
+| Runtime independence | Keep `packages/*` free of Node built-ins, timers and globals; reach the runtime through the `Clock`, `HttpTransport`, `MessageTransport` and `CorpusStore` contracts. `packages/ui` is browser code and may use browser timers. | ESLint |
+| UI boundaries | Take Fluent values only from `@flowmock/ui/fluent`, toast state only in `packages/ui/src/winui/toaster.tsx`, and `react-i18next` only through the typed boundary; keep `packages/ui` free of FlowMock domain packages. | ESLint |
 | Package boundaries | Import other packages through their exports maps; `apps/server` exposes only the type-only `./app-type`. | ESLint |
 | Replay fidelity | Replay recorded bytes unless a scenario transform changes them, and record every change as provenance. | Core and server tests |
 | Recorded errors | Take error bodies, headers and events from recordings or explicit scenario overrides; never invent them silently. | Engine tests |
@@ -30,3 +31,4 @@
 | Package | `packages/core` | Selects, transforms, plans and runs replays. |
 | Package | `packages/protocols` | Defines wire types, decoders and reducers. |
 | Package | `packages/test-fixtures` | Provides recorded exchanges for tests. |
+| Package | `packages/ui` | Provides the Fluent/WinUI layer, generic controls, charts and the typed i18n boundary. |

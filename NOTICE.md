@@ -25,7 +25,8 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/core/src/protocols/*` (output-frame detection) | `packages/gateway/src/data-plane/chat/shared/first-output-token.ts` | The classification is reused to measure TTFT and attribute output tokens. |
 | `apps/server/src/store/database.ts` (`applyMigrations`) | `apps/platform-node/src/migrate.ts` | Synchronous `node:sqlite` version. |
 | `apps/server/src/static-web.ts` | `apps/platform-node/src/static-web.ts` | FlowMock-owned paths, environment setting and build diagnostic; rejects raw dot-segment traversal and symlink escapes. |
-| `eslint.config.ts` | `eslint.config.ts` | Trimmed to FlowMock's packages; adds the runtime-independence rules for `packages/*`. |
+| `eslint.config.ts` | `eslint.config.ts` | Trimmed to FlowMock's packages; adds the runtime-independence rules for `packages/*` and enforces the Fluent, toast and `react-i18next` import boundaries that Floway keeps by convention. |
+| `packages/ui/__tests__/{setup,match-media-stub,local-storage-stub,settle}.ts` | `apps/web/__tests__/*` (same names) | Setup loads no app i18n and skips DOM preparation for Node-environment suites. |
 
 Design references without copied code: the recording format of
 `packages/gateway/src/dump/`, the runtime contracts of `packages/platform`, the

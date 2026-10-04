@@ -1,0 +1,26 @@
+{
+  "name": "@flowmock/ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {},
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fluentui/react-components": "^9.74.4",
+    "@fluentui/react-icons": "^2.0.334",
+    "@fluentui/react-toast": "^9.8.1",
+    "i18next": "^26.3.6",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-i18next": "^17.0.11"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "happy-dom": "^20.11.1"
+  }
+}
