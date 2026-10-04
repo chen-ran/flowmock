@@ -6,7 +6,10 @@
   "exports": {
     "./critical.css": { "import": "./src/critical.css.ts", "types": "./src/critical.css.ts" },
     "./fluent": { "import": "./src/fluent.ts", "types": "./src/fluent.ts" },
+    "./global.css": "./src/global.css",
     "./theme": { "import": "./src/theme.ts", "types": "./src/theme.ts" },
+    "./uno": { "import": "./src/uno/preset.ts", "types": "./src/uno/preset.ts" },
+    "./vite": { "import": "./src/vite/index.ts", "types": "./src/vite/index.ts" },
     "./winui": { "import": "./src/winui/index.ts", "types": "./src/winui/index.ts" },
     "./winui/*": { "import": "./src/winui/*.ts", "types": "./src/winui/*.ts" }
   },
@@ -29,6 +32,10 @@
     "@types/node": "^22.20.5",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "happy-dom": "^20.11.1"
+    "@unocss/postcss": "^66.10.5",
+    "happy-dom": "^20.11.1",
+    "postcss": "^8.5.28",
+    "unocss": "^66.10.5",
+    "vite": "^8.3.2"
   }
 }

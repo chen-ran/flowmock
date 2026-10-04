@@ -33,6 +33,12 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/ui/src/lib/{color,legacy-css-color,use-media-query}.ts` | `apps/web/src/lib/*` (same names) | Unchanged. |
 | `packages/ui/src/winui/**` | `apps/web/src/winui/**` | `floway` identifiers renamed `flowmock`; the color-picker sheet is not ported; comments point at FlowMock paths; optional chains in `switch-drag.tsx`. |
 | `packages/ui/__tests__/render.tsx`, `packages/ui/__tests__/{winui,lib}/**` | `apps/web/__tests__/render.tsx`, `apps/web/__tests__/{winui,lib}/**` | `motion_test.tsx` keeps only the presence suite; the navigation indicator suite moves with the app shell. |
+| `packages/ui/src/vite/typescript-stylesheets.ts` | `apps/web/vite.config.ts` (`typescriptStylesheets`) | Takes the virtual sheet table as an argument; module paths are absolute. |
+| `packages/ui/src/vite/legacy-css.ts` | `apps/web/vite.config.ts`, `apps/web/postcss.config.ts` | The CSS build target and the legacy-colour PostCSS plugin as exports. |
+| `packages/ui/src/uno/preset.ts` | `apps/web/uno.config.ts` | A preset over `presetWind3` without content globs; exports the package's own globs for an app to scan. |
+| `packages/ui/src/global.css` | `apps/web/src/global.css` | `floway` identifiers renamed `flowmock`; comments point at FlowMock paths. |
+| `packages/ui/src/assets/fonts/*` | `apps/web/src/assets/fonts/*` | Unchanged; see Meslo LG below. |
+| `packages/ui/__tests__/vite/stylesheet-composition_test.ts` | `apps/web/__tests__/stylesheet-composition_test.ts` | Paths only. |
 
 Design references without copied code: the recording format of
 `packages/gateway/src/dump/`, the runtime contracts of `packages/platform`, the
@@ -66,3 +72,31 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Meslo LG
+
+The four `packages/ui/src/assets/fonts/meslo-lg-s-*.generated.woff2` files are
+taken from Floway, which converted them from the non-DZ Meslo LG v1.2.1 archive
+at commit `09a431d546d211130352c28eb0466e5d7d5aeaf0`:
+
+https://github.com/andreberg/Meslo-Font/blob/09a431d546d211130352c28eb0466e5d7d5aeaf0/dist/v1.2.1/Meslo%20LG%20v1.2.1.zip
+
+They are the Meslo LG S Regular, Italic, Bold and Bold Italic TrueType faces,
+converted to WOFF2 with every fixed-width glyph centred in a 1264-unit advance.
+No outline, hinting instruction, character map or proportional-glyph advance is
+otherwise changed.
+
+Meslo LG is a customized version of Apple's Menlo, itself a customized
+Bitstream Vera Sans Mono:
+
+```
+Copyright 2009, 2010, 2013 André Berg
+Copyright © 2009 Apple Inc.
+Copyright © 2006 by Tavmjong Bah.
+Copyright © 2003 by Bitstream, Inc. All Rights Reserved.
+```
+
+Menlo is a trademark of Apple Inc. Bitstream Vera is a trademark of Bitstream,
+Inc., designed by Jim Lyles. Meslo LG is licensed under the Apache License,
+Version 2.0; the full text is in
+`packages/ui/src/assets/fonts/LICENSE-Meslo-LG.txt`.

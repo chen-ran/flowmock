@@ -247,8 +247,10 @@ const config: Linter.Config[] = [
   },
   {
     // Browser sources: no Node built-ins or Node globals. Timers are the
-    // browser's own, so unlike the engine they stay available.
+    // browser's own, so unlike the engine they stay available. The Vite and
+    // UnoCSS helpers run in the app's build, in Node.
     files: ['packages/ui/src/**/*.{ts,tsx}', 'apps/web/src/**/*.{ts,tsx}'],
+    ignores: ['packages/ui/src/vite/**', 'packages/ui/src/uno/**'],
     rules: {
       'no-restricted-imports': restrictImports([FLUENT_VALUES, FLUENT_TOAST, REACT_I18NEXT], [NODE_BUILTINS]),
       'no-restricted-globals': ['error',
