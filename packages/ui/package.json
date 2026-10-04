@@ -7,6 +7,7 @@
     "./critical.css": { "import": "./src/critical.css.ts", "types": "./src/critical.css.ts" },
     "./fluent": { "import": "./src/fluent.ts", "types": "./src/fluent.ts" },
     "./global.css": "./src/global.css",
+    "./i18n": { "import": "./src/i18n/index.ts", "types": "./src/i18n/index.ts" },
     "./theme": { "import": "./src/theme.ts", "types": "./src/theme.ts" },
     "./uno": { "import": "./src/uno/preset.ts", "types": "./src/uno/preset.ts" },
     "./vite": { "import": "./src/vite/index.ts", "types": "./src/vite/index.ts" },

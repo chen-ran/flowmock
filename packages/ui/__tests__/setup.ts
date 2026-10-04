@@ -2,10 +2,20 @@
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
 
+import { initI18n } from '../src/i18n/init.ts';
+
 // Vitest runs without `globals`, so React Testing Library's automatic cleanup
 // never arms itself. Unmounting here rather than per suite is what keeps one
 // suite's DOM out of the next one's queries.
 afterEach(cleanup);
+
+// The controls' own strings, booted once for the whole run on the instance the
+// controls read, so that a suite querying by accessible name resolves the same
+// strings an app renders. No app catalogue is merged in.
+await initI18n({
+  loadLocale: async () => await Promise.resolve({ translation: {} }),
+  shell: { translation: {} },
+});
 
 // The ESLint boundary suite runs in Node, where there is no document to
 // prepare.
