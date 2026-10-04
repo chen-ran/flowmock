@@ -1,0 +1,19 @@
+// Ported from Floway apps/web/src/theme.ts (MIT). See NOTICE.md.
+import { fluentComponents } from './fluent.ts';
+import { baseFontStack, monospaceStack } from './font-stacks.ts';
+
+const { webDarkTheme, webLightTheme } = fluentComponents;
+
+// One step of Fluent's ramp is ours: 600 drops from 24px to 22px, on Fluent's
+// unchanged 32px leading. WinUI's ramp steps from Subtitle 20 straight to Title
+// 28, so neither value transcribes anything and the 22 is ours. Every other step
+// is Fluent's own: 12/14/20 already are WinUI's Caption, Body and Subtitle.
+// https://github.com/microsoft/microsoft-ui-xaml/blob/188f602b27cdb47572b28c380e9c087b02e1ccee/controls/dev/CommonStyles/TextBlock_themeresources.xaml#L3-L9
+const fontOverrides = {
+  fontFamilyBase: baseFontStack,
+  fontFamilyMonospace: monospaceStack,
+  fontSizeBase600: '22px',
+} as const;
+
+export const flowmockLightTheme = { ...webLightTheme, ...fontOverrides };
+export const flowmockDarkTheme = { ...webDarkTheme, ...fontOverrides };

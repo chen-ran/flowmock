@@ -14,3 +14,13 @@ onlyBuiltDependencies:
 ignoredBuiltDependencies:
   - '@google/genai'
   - protobufjs
+
+# Later happy-dom releases implement Element.animate but reject a cancelled
+# animation's finished promise without marking it handled, so every Fluent
+# motion cancelled in a test surfaces as an unhandled rejection. Browsers mark
+# it handled, as the spec's cancel procedure requires. 20.11.1 has no
+# Element.animate, and Fluent's motion settles without one. Vitest loads the
+# environment through its own peer, so the pin has to be an override.
+# https://drafts.csswg.org/web-animations-1/#cancel-an-animation
+overrides:
+  happy-dom: 20.11.1

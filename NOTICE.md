@@ -27,6 +27,12 @@ Every ported file names its origin in a header comment. The ports are:
 | `apps/server/src/static-web.ts` | `apps/platform-node/src/static-web.ts` | FlowMock-owned paths, environment setting and build diagnostic; rejects raw dot-segment traversal and symlink escapes. |
 | `eslint.config.ts` | `eslint.config.ts` | Trimmed to FlowMock's packages; adds the runtime-independence rules for `packages/*` and enforces the Fluent, toast and `react-i18next` import boundaries that Floway keeps by convention. |
 | `packages/ui/__tests__/{setup,match-media-stub,local-storage-stub,settle}.ts` | `apps/web/__tests__/*` (same names) | Setup loads no app i18n and skips DOM preparation for Node-environment suites. |
+| `packages/ui/src/fluent.ts`, `packages/ui/src/font-stacks.ts` | `apps/web/src/fluent.ts`, `apps/web/src/font-stacks.ts` | Comment wording. |
+| `packages/ui/src/base-theme.ts` | `apps/web/src/theme.ts` | Renamed; `packages/ui/src/theme.ts` is FlowMock's public entry with `useSystemTheme`, taken from `apps/web/src/root.tsx`. |
+| `packages/ui/src/critical.css.ts` | `apps/web/src/critical.css.ts` | Only the document rules; app components add their own sheets. |
+| `packages/ui/src/lib/{color,legacy-css-color,use-media-query}.ts` | `apps/web/src/lib/*` (same names) | Unchanged. |
+| `packages/ui/src/winui/**` | `apps/web/src/winui/**` | `floway` identifiers renamed `flowmock`; the color-picker sheet is not ported; comments point at FlowMock paths; optional chains in `switch-drag.tsx`. |
+| `packages/ui/__tests__/render.tsx`, `packages/ui/__tests__/{winui,lib}/**` | `apps/web/__tests__/render.tsx`, `apps/web/__tests__/{winui,lib}/**` | `motion_test.tsx` keeps only the presence suite; the navigation indicator suite moves with the app shell. |
 
 Design references without copied code: the recording format of
 `packages/gateway/src/dump/`, the runtime contracts of `packages/platform`, the
