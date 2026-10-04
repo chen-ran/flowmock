@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { adminAuth, type AdminEnv, authRoutes } from './auth.ts';
 import { liveStream, requestStream } from './live.ts';
 import { exportCorpus, importCorpus } from './portable.ts';
-import { configErrorResponse, jsonBody } from './validation.ts';
+import { configErrorResponse, jsonBody, queryParams } from './validation.ts';
 import { matchEndpoint } from '../data-plane/endpoints.ts';
 import type { Services } from '../services.ts';
 import { ConfigError, keyInputSchema, maskHeaders, type StoredScenario, type Target, targetInputSchema } from '../store/config-store.ts';
@@ -44,6 +44,15 @@ const cassettePatchSchema = z.object({
 
 const MAX_PREVIEW_TEXT = 4096;
 
+const pageLimit = z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(1000)).default(100);
+const recordingsQuery = z.object({
+  protocol: z.enum(PROTOCOLS).optional(), model: z.string().optional(), outcome: z.string().optional(), cassette: z.string().optional(), session: z.string().optional(), q: z.string().optional(), before: z.string().min(1).optional(),
+  limit: pageLimit,
+  offset: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().nonnegative()).default(0),
+});
+const requestsQuery = z.object({ limit: pageLimit, before: z.string().min(1).optional(), mode: z.enum(['record', 'replay']).optional(), key: z.string().optional(), protocol: z.enum(PROTOCOLS).optional(), outcome: z.string().optional() });
+const deleteRecordingsBody = z.object({ ids: z.array(z.string().min(1)).min(1).max(1000) }).strict();
+
 export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
   .onError((error, c) => {
     if (error instanceof ConfigError) return configErrorResponse(c, error);
@@ -57,19 +66,22 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
 
 // ── Corpus ──
 
-  .get('/recordings', c => {
-    const query = c.req.query();
-    const protocol = query.protocol === undefined ? undefined : z.enum(PROTOCOLS).parse(query.protocol);
+  .get('/recordings', queryParams(recordingsQuery), c => {
+    const query = c.req.valid('query');
     return c.json(services.corpus.list({
-      protocol,
+      protocol: query.protocol,
       model: query.model,
       outcome: query.outcome,
       cassetteId: query.cassette,
       sessionId: query.session,
-      limit: query.limit === undefined ? undefined : Math.min(1000, Number(query.limit)),
-      offset: query.offset === undefined ? undefined : Number(query.offset),
-    }));
+      limit: query.limit,
+      offset: query.offset,
+      q: query.q,
+      before: query.before,
+    }), 200);
   })
+  .post('/recordings/delete', jsonBody(deleteRecordingsBody), async c => c.json({ deleted: await services.corpus.deleteRecordings(c.req.valid('json').ids) }, 200))
+  .get('/stats', c => c.json(services.corpus.stats(), 200))
   .get('/recordings/:id', async c => {
     const recording = await services.corpus.getRecording(c.req.param('id'));
     if (!recording) return c.json({ error: { code: 'not_found', message: 'recording not found' } }, 404);
@@ -188,10 +200,9 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
 
   .get('/live', c => liveStream(c, services))
   .get('/requests/stream', c => requestStream(c, services))
-  .get('/requests', c => {
-    const limit = Number(c.req.query('limit') ?? 100);
-    if (!Number.isInteger(limit) || limit < 1 || limit > 1000) return c.json({ error: { code: 'invalid_request', message: 'limit must be an integer between 1 and 1000' } }, 400);
-    return c.json({ items: services.timeline.list(limit, { before: c.req.query('before'), mode: c.req.query('mode'), keyName: c.req.query('key'), protocol: c.req.query('protocol'), outcome: c.req.query('outcome') }) }, 200);
+  .get('/requests', queryParams(requestsQuery), c => {
+    const query = c.req.valid('query');
+    return c.json({ items: services.timeline.list(query.limit, { before: query.before, mode: query.mode, keyName: query.key, protocol: query.protocol, outcome: query.outcome }) }, 200);
   })
   .get('/requests/:id', c => {
     const entry = services.timeline.get(c.req.param('id'));

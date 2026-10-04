@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { type RunningServer, startServer } from '../../src/server.ts';
 
 export interface TestServer extends RunningServer {
+  dataDir: string;
   admin(path: string, init?: RequestInit): Promise<Response>;
   stop(): Promise<void>;
 }
@@ -16,6 +17,7 @@ export const startTestServer = async (options: { cassetteIdleMs?: number } = {})
   const running = await startServer({ port: 0, dataDir, databasePath: ':memory:', adminKey: ADMIN_KEY, cassetteIdleMs: options.cassetteIdleMs });
   return {
     ...running,
+    dataDir,
     admin: async (path, init = {}) => await fetch(`${running.url}/api${path}`, { ...init, headers: { authorization: `Bearer ${ADMIN_KEY}`, ...(init.body !== undefined && typeof init.body === 'string' && init.body.startsWith('{') ? { 'content-type': 'application/json' } : {}), ...init.headers } }),
     stop: async () => {
       await running.close();

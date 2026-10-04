@@ -59,6 +59,8 @@ export interface RecordingFilter {
   sessionId?: string;
   limit?: number;
   offset?: number;
+  q?: string;
+  before?: string;
 }
 
 type ResponseMeta = Omit<RecordedResponse, 'chunks'>;
@@ -212,21 +214,65 @@ export class SqliteCorpus implements CorpusStore {
     if (filter.outcome) { clauses.push('outcome GLOB ?'); values.push(filter.outcome); }
     if (filter.cassetteId) { clauses.push('cassette_id = ?'); values.push(filter.cassetteId); }
     if (filter.sessionId) { clauses.push('session_id = ?'); values.push(filter.sessionId); }
-    const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+    if (filter.q !== undefined) { clauses.push("instr(lower(json_extract(request, '$.body')), lower(?)) > 0"); values.push(filter.q); }
+    let where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
     const total = (this.db.prepare(`SELECT COUNT(*) AS count FROM recordings ${where}`).get(...values) as { count: number }).count;
-    const order = filter.cassetteId ? 'ORDER BY cassette_seq, created_at' : 'ORDER BY created_at DESC, id DESC';
+    if (filter.before !== undefined) {
+      const cursor = this.db.prepare('SELECT created_at, cassette_seq FROM recordings WHERE id = ?').get(filter.before) as { created_at: number; cassette_seq: number | null } | undefined;
+      if (!cursor) return { total, items: [] };
+      if (filter.cassetteId) {
+        // Preserve the existing cassette sequence order, including legacy
+        // entries with a null sequence, while advancing through its pages.
+        clauses.push('(COALESCE(cassette_seq, -1) > ? OR (COALESCE(cassette_seq, -1) = ? AND (created_at > ? OR (created_at = ? AND id > ?))))');
+        values.push(cursor.cassette_seq ?? -1, cursor.cassette_seq ?? -1, cursor.created_at, cursor.created_at, filter.before);
+      } else {
+        clauses.push('(created_at < ? OR (created_at = ? AND id < ?))');
+        values.push(cursor.created_at, cursor.created_at, filter.before);
+      }
+      where = `WHERE ${clauses.join(' AND ')}`;
+    }
+    const order = filter.cassetteId ? 'ORDER BY cassette_seq, created_at, id' : 'ORDER BY created_at DESC, id DESC';
     const rows = this.db.prepare(`SELECT * FROM recordings ${where} ${order} LIMIT ? OFFSET ?`).all(...values, filter.limit ?? 100, filter.offset ?? 0) as unknown as RecordingRow[];
     return { total, items: rows.map(summaryFromRow) };
   }
 
   async deleteRecording(id: string): Promise<boolean> {
-    const row = this.db.prepare('SELECT chunk_file FROM recordings WHERE id = ?').get(id) as { chunk_file: string } | undefined;
-    if (!row) return false;
-    this.db.prepare('DELETE FROM recordings WHERE id = ?').run(id);
-    await this.chunks.remove(row.chunk_file);
-    this.loaded.delete(id);
-    this.invalidate();
-    return true;
+    return (await this.deleteRecordings([id])) > 0;
+  }
+
+  async deleteRecordings(ids: readonly string[]): Promise<number> {
+    const rows = transaction(this.db, () => {
+      const found: Array<{ id: string; chunk_file: string }> = [];
+      for (const id of new Set(ids)) {
+        const row = this.db.prepare('SELECT id, chunk_file FROM recordings WHERE id = ?').get(id) as { id: string; chunk_file: string } | undefined;
+        if (!row) continue;
+        this.db.prepare('DELETE FROM recordings WHERE id = ?').run(id);
+        found.push(row);
+      }
+      return found;
+    });
+    // Invalidate immediately after the transaction, even if file removal
+    // fails; a deleted row must never be replayed from a stale cache.
+    for (const row of rows) this.loaded.delete(row.id);
+    if (rows.length) this.invalidate();
+    for (const row of rows) await this.chunks.remove(row.chunk_file);
+    return rows.length;
+  }
+
+  stats(): {
+    recordings: number;
+    bytes: number;
+    byProtocol: Array<{ protocol: Protocol; recordings: number; bytes: number }>;
+    byOutcome: Array<{ outcome: string; recordings: number; bytes: number }>;
+    byModel: Array<{ model: string | null; recordings: number; bytes: number }>;
+  } {
+    const aggregate = 'COUNT(*) AS recordings, COALESCE(SUM(body_bytes), 0) AS bytes';
+    return {
+      ...this.db.prepare(`SELECT ${aggregate} FROM recordings`).get() as { recordings: number; bytes: number },
+      byProtocol: this.db.prepare(`SELECT protocol, ${aggregate} FROM recordings GROUP BY protocol ORDER BY protocol`).all() as Array<{ protocol: Protocol; recordings: number; bytes: number }>,
+      byOutcome: this.db.prepare(`SELECT outcome, ${aggregate} FROM recordings GROUP BY outcome ORDER BY outcome`).all() as Array<{ outcome: string; recordings: number; bytes: number }>,
+      byModel: this.db.prepare(`SELECT model, ${aggregate} FROM recordings GROUP BY model ORDER BY model`).all() as Array<{ model: string | null; recordings: number; bytes: number }>,
+    };
   }
 
   createCassette(input: { name: string; keyName?: string | null; targetId?: string | null; sessionId?: string | null; description?: string | null }, now = Date.now()): CassetteInfo {

@@ -9,6 +9,14 @@ afterEach(async () => { await flowmock.stop(); });
 const login = (key: string) => fetch(`${flowmock.url}/api/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key }) });
 
 describe('admin sessions', () => {
+  it('issues local development sessions without a configured admin key', async () => {
+    flowmock.services.adminKey = null;
+    expect(await (await fetch(`${flowmock.url}/api/auth/me`)).json()).toEqual({ via: 'open' });
+    const response = await login('local-development');
+    expect(response.status).toBe(201);
+    const { token } = await response.json() as { token: string };
+    expect(await (await fetch(`${flowmock.url}/api/auth/me`, { headers: { 'x-flowmock-admin-session': token } })).json()).toEqual({ via: 'session' });
+  });
   it('exchanges the key, keeps only a hash and authenticates the control plane and metrics', async () => {
     const response = await login(ADMIN_KEY);
     expect(response.status).toBe(201);

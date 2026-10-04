@@ -1,4 +1,4 @@
-import type { Context, TypedResponse } from 'hono';
+import type { Context, MiddlewareHandler, TypedResponse } from 'hono';
 import { validator } from 'hono/validator';
 import { z } from 'zod';
 
@@ -15,6 +15,13 @@ export const jsonBody = <S extends z.ZodType>(schema: S) => validator<z.input<S>
   if (!parsed.success) return c.json({ error: { code: 'invalid_request', message: z.prettifyError(parsed.error) } }, 400);
   return parsed.data as z.output<S>;
 });
+
+export const queryParams = <S extends z.ZodObject>(schema: S): MiddlewareHandler<AdminEnv, string, { in: { query: z.input<S> }; out: { query: z.output<S> } }, InvalidBody> => async (c, next) => {
+  const parsed = schema.safeParse(c.req.query());
+  if (!parsed.success) return c.json({ error: { code: 'invalid_request', message: z.prettifyError(parsed.error) } }, 400);
+  c.req.addValidatedData('query', parsed.data);
+  await next();
+};
 
 export const configErrorResponse = (c: Context<AdminEnv>, error: unknown) => {
   if (!(error instanceof ConfigError)) throw error;

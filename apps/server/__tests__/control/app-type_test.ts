@@ -17,6 +17,8 @@ describe('typed control-plane client', () => {
     const list = await (await client.scenarios.$get()).json();
     expectTypeOf(list.items[0].name).toEqualTypeOf<string>();
     expect(list.items[0].name).toBe('default');
+    const searched = await client.recordings.$get({ query: { q: 'hello', limit: '10' } });
+    expect(searched.status).toBe(200);
     expectTypeOf<InferRequestType<typeof client.keys.$post>['json']>().toEqualTypeOf<KeyInput>();
     const key = await client.keys.$post({ json: { key: 'fm-typed-client', replay: 'default' } });
     expect(key.status).toBe(201);
