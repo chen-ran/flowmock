@@ -6,6 +6,7 @@ import { ConversationMemory } from './state/conversations.ts';
 import { Metrics } from './state/metrics.ts';
 import { SessionState } from './state/sessions.ts';
 import { Timeline } from './state/timeline.ts';
+import { AdminSessions } from './store/admin-sessions.ts';
 import { ChunkFiles } from './store/chunk-files.ts';
 import { ConfigStore } from './store/config-store.ts';
 import { SqliteCorpus } from './store/corpus-store.ts';
@@ -23,6 +24,7 @@ export interface Services {
   clock: Clock;
   // Bearer token for the control plane; null leaves it open (loopback only).
   adminKey: string | null;
+  adminSessions: AdminSessions;
 }
 
 export interface ServiceOptions {
@@ -48,5 +50,6 @@ export const createServices = (options: ServiceOptions): Services => {
     cassettes: new CassetteTracker(corpus, options.cassetteIdleMs),
     clock: options.clock ?? nodeClock,
     adminKey: options.adminKey ?? null,
+    adminSessions: new AdminSessions(options.db),
   };
 };

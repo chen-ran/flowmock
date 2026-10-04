@@ -7,7 +7,7 @@ describe('migrations', () => {
     const db = openDatabase(':memory:');
     applyMigrations(db);
     const applied = db.prepare('SELECT name FROM _migrations').all() as Array<{ name: string }>;
-    expect(applied.map(row => row.name)).toEqual(['0001_init.sql']);
+    expect(applied.map(row => row.name)).toEqual(['0001_init.sql', '0002_admin_sessions.sql']);
     const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all() as Array<{ name: string }>).map(row => row.name);
     expect(tables).toEqual(expect.arrayContaining(['api_keys', 'cassettes', 'recordings', 'scenarios', 'targets']));
     db.close();

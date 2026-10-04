@@ -1,12 +1,12 @@
 import type { Readable } from 'node:stream';
 import { createBrotliDecompress, createGunzip, createInflate } from 'node:zlib';
 
-import type { HttpBindings } from '@hono/node-server';
 import { RESPONSE_ALREADY_SENT } from '@hono/node-server/utils/response';
 import type { Context } from 'hono';
 import { request as undiciRequest } from 'undici';
 
 import { type Endpoint, extractKey, protocolErrorResponse, readOverrides, stripModelSuffix } from './endpoints.ts';
+import type { AdminEnv } from '../control/auth.ts';
 import { NodeHttpTransport } from '../runtime/http-transport.ts';
 import type { Services } from '../services.ts';
 import type { KeyBinding, Target } from '../store/config-store.ts';
@@ -26,7 +26,7 @@ import {
   runHttpPlan,
 } from '@flowmock/core';
 
-type DataPlaneContext = Context<{ Bindings: HttpBindings }>;
+type DataPlaneContext = Context<AdminEnv>;
 
 const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 

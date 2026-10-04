@@ -1,14 +1,14 @@
-import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
 
-import { adminAuth, controlRoutes } from './control/routes.ts';
+import { adminAuth, type AdminEnv } from './control/auth.ts';
+import { controlRoutes } from './control/routes.ts';
 import { matchEndpoint } from './data-plane/endpoints.ts';
 import { handleDataPlane } from './data-plane/http.ts';
 import { getGeminiModel, listGeminiModels, listModels } from './data-plane/models.ts';
 import type { Services } from './services.ts';
 
 export const createApp = (services: Services) => {
-  const app = new Hono<{ Bindings: HttpBindings }>();
+  const app = new Hono<AdminEnv>();
 
   app.onError((error, c) => c.json({ error: { type: 'flowmock_internal_error', message: error.message, stack: error.stack } }, 500));
 

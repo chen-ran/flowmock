@@ -1,8 +1,7 @@
-import { timingSafeEqual } from 'node:crypto';
-
-import { Hono, type MiddlewareHandler } from 'hono';
+import { Hono } from 'hono';
 import { z } from 'zod';
 
+import { adminAuth, type AdminEnv, authRoutes } from './auth.ts';
 import { exportCorpus, importCorpus } from './portable.ts';
 import { matchEndpoint } from '../data-plane/endpoints.ts';
 import type { Services } from '../services.ts';
@@ -18,21 +17,6 @@ import {
   scenarioSchema,
 } from '@flowmock/core';
 import { PROTOCOLS } from '@flowmock/protocols/common';
-
-const safeEqual = (left: string, right: string): boolean => {
-  const a = Buffer.from(left);
-  const b = Buffer.from(right);
-  return a.length === b.length && timingSafeEqual(a, b);
-};
-
-export const adminAuth = (services: Services): MiddlewareHandler => async (c, next) => {
-  if (services.adminKey !== null) {
-    const header = c.req.header('authorization') ?? '';
-    const token = /^Bearer\s+(.+)$/i.exec(header)?.[1]?.trim() ?? '';
-    if (!safeEqual(token, services.adminKey)) return c.json({ error: { code: 'unauthorized', message: 'FlowMock admin API: send Authorization: Bearer <FLOWMOCK_ADMIN_KEY>.' } }, 401);
-  }
-  await next();
-};
 
 const scenarioView = (stored: StoredScenario) => ({ name: stored.name, builtIn: stored.builtIn, source: stored.source, scenario: stored.scenario, createdAt: stored.createdAt, updatedAt: stored.updatedAt });
 
@@ -69,14 +53,15 @@ const cassettePatchSchema = z.object({
 
 const MAX_PREVIEW_TEXT = 4096;
 
-export const controlRoutes = (services: Services) => new Hono()
-  .use('*', adminAuth(services))
+export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
   .onError((error, c) => {
     if (error instanceof ConfigError) return c.json({ error: { code: 'invalid_request', message: error.message } }, error.status as 400);
     return c.json({ error: { code: 'internal_error', message: error.message, stack: error.stack } }, 500);
   })
 
   .get('/health', c => c.json({ ok: true, version: FLOWMOCK_VERSION }))
+  .route('/auth', authRoutes(services))
+  .use('*', adminAuth(services))
 
 // ── Corpus ──
 
