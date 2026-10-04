@@ -7,18 +7,23 @@ import winuiStylesheet from 'virtual:flowmock-winui.css?url';
 
 import { BackNavigationButton } from '../src/controls/back-navigation-button.tsx';
 import { Chip } from '../src/controls/chip.tsx';
+import { ChoiceGroup } from '../src/controls/choice-group.tsx';
 import { CodeBlock } from '../src/controls/code-block.tsx';
+import { ConfirmDialog } from '../src/controls/confirm-dialog.tsx';
 import { DashboardPageHeader } from '../src/controls/dashboard-page-header.tsx';
 import { EmptyState } from '../src/controls/empty-state.tsx';
 import { HttpMethodBadge, HttpStatusBadge } from '../src/controls/http-badge.tsx';
 import { PANEL_STACK_CLASS } from '../src/controls/layout.ts';
 import { ContentLoadingScreen } from '../src/controls/loading-screen.tsx';
+import { MultiselectCombobox, valuesAsOptions } from '../src/controls/multiselect-combobox.tsx';
 import { OutcomeMessageBar } from '../src/controls/outcome-message-bar.tsx';
 import { Panel } from '../src/controls/panel.tsx';
 import { RouteLink } from '../src/controls/route-link.tsx';
+import { SecretInput } from '../src/controls/secret-input.tsx';
 import { SectionHeader } from '../src/controls/section-header.tsx';
 import { SettingsCard, SettingsExpander, SettingsSwitch } from '../src/controls/settings-card.tsx';
 import { StatusBadge } from '../src/controls/status-badge.tsx';
+import { SwitchSetting } from '../src/controls/switch-setting.tsx';
 import { TooltipIconButton } from '../src/controls/tooltip-icon-button.tsx';
 import { useCopyToClipboard } from '../src/controls/use-copy-to-clipboard.ts';
 import { fluentComponents } from '../src/fluent.ts';
@@ -90,6 +95,9 @@ const Playground = () => {
   const { dispatchToast } = useToastController(toasterId);
   const [switchOn, setSwitchOn] = useState(true);
   const copy = useCopyToClipboard();
+  const [range, setRange] = useState('1h');
+  const [models, setModels] = useState<string[]>(['claude-sonnet-5-5']);
+  const [confirming, setConfirming] = useState(false);
 
   return <main className="grid gap-8 p-[var(--flowmock-page-inset)]">
     <DashboardPageHeader actions={<Button appearance="primary">Action</Button>} description="Controls rendered through the WinUI layer." title="Playground" />
@@ -123,6 +131,16 @@ const Playground = () => {
         <OutcomeMessageBar intent="error" title="Import failed" onDismiss={() => {}}>The file is not a FlowMock cassette.</OutcomeMessageBar>
         <CodeBlock code={'{\n  "model": "claude-sonnet-5-5",\n  "stream": true\n}'} copyOutcome={copy.outcomeFor()} language="json" onCopy={() => copy.copy('{}')} />
       </div>
+    </Section>
+    <Section title="Forms and dialogs">
+      <ChoiceGroup ariaLabel="Range" items={[{ value: '1h', label: '1 hour' }, { value: '24h', label: '24 hours' }, { value: '7d', label: '7 days' }]} onChange={setRange} value={range} />
+      <SwitchSetting checked={switchOn} description="Applies to new requests." label="Inject faults" onChange={setSwitchOn} />
+      <Field label="Upstream key"><SecretInput defaultValue="sk-ant-example" /></Field>
+      <Field label="Models">
+        <MultiselectCombobox ariaLabel="Models" onChange={setModels} options={valuesAsOptions(['claude-sonnet-5-5', 'claude-opus-5-5', 'gpt-5'])} placeholder="Pick models" value={models} />
+      </Field>
+      <Button onClick={() => setConfirming(true)}>Confirm dialog</Button>
+      <ConfirmDialog actionLabel="Delete" message="The scenario and its history are removed." onConfirm={() => setConfirming(false)} onOpenChange={setConfirming} open={confirming} title="Delete the scenario?" />
     </Section>
     <Section title="Buttons">
       <Button appearance="primary">Primary</Button>
