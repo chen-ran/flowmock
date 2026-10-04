@@ -13,9 +13,14 @@ const RESTRICTED_IMPORT_PATTERNS = [
     message: 'Cross-package deep imports are forbidden. Use the package\'s public exports map.',
   },
   {
-    group: ['@flowmock/server', '@flowmock/server/*', '!@flowmock/server/app-type'],
+    group: ['@flowmock/server/*', '!@flowmock/server/app-type'],
     message: 'apps/server is a deployment target, not a library. Only its type-only ./app-type export is public.',
   },
+];
+
+const RESTRICTED_IMPORT_PATHS = [
+  { name: '@flowmock/server', message: 'apps/server exposes only its type-only ./app-type export.' },
+  { name: '@flowmock/server/app-type', allowTypeImports: true, message: 'The server app-type entry is type-only.' },
 ];
 
 const projectList = [
@@ -42,7 +47,7 @@ const commonConfig: Linter.Config = {
       },
     ],
     'import/no-duplicates': 'error',
-    'no-restricted-imports': ['error', { patterns: RESTRICTED_IMPORT_PATTERNS }],
+    'no-restricted-imports': ['error', { paths: RESTRICTED_IMPORT_PATHS, patterns: RESTRICTED_IMPORT_PATTERNS }],
 
     // packages/* stay runtime-independent: the engine reaches Node only
     // through the Transport, Clock and CorpusStore contracts.
@@ -143,6 +148,7 @@ const config: Linter.Config[] = [
     files: ['packages/*/src/**/*.ts'],
     rules: {
       'no-restricted-imports': ['error', {
+        paths: RESTRICTED_IMPORT_PATHS,
         patterns: [
           ...RESTRICTED_IMPORT_PATTERNS,
           { group: ['node:*'], message: 'packages/* are runtime-independent; reach Node through apps/server.' },

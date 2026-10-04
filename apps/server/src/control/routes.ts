@@ -1,9 +1,11 @@
 import { Hono } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { z } from 'zod';
 
 import { adminAuth, type AdminEnv, authRoutes } from './auth.ts';
 import { liveStream, requestStream } from './live.ts';
 import { exportCorpus, importCorpus } from './portable.ts';
+import { configErrorResponse, jsonBody } from './validation.ts';
 import { matchEndpoint } from '../data-plane/endpoints.ts';
 import type { Services } from '../services.ts';
 import { ConfigError, keyInputSchema, maskHeaders, type StoredScenario, type Target, targetInputSchema } from '../store/config-store.ts';
@@ -22,18 +24,6 @@ import { PROTOCOLS } from '@flowmock/protocols/common';
 const scenarioView = (stored: StoredScenario) => ({ name: stored.name, builtIn: stored.builtIn, source: stored.source, scenario: stored.scenario, createdAt: stored.createdAt, updatedAt: stored.updatedAt });
 
 const targetView = (target: Target) => ({ ...target, headers: maskHeaders(target.headers) });
-
-const parseJsonBody = async <T>(request: Request, schema: z.ZodType<T>): Promise<T> => {
-  let value: unknown;
-  try {
-    value = await request.json();
-  } catch {
-    throw new ConfigError('request body must be JSON');
-  }
-  const parsed = schema.safeParse(value);
-  if (!parsed.success) throw new ConfigError(z.prettifyError(parsed.error));
-  return parsed.data;
-};
 
 const previewSchema = z.object({
   protocol: z.enum(PROTOCOLS),
@@ -56,7 +46,8 @@ const MAX_PREVIEW_TEXT = 4096;
 
 export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
   .onError((error, c) => {
-    if (error instanceof ConfigError) return c.json({ error: { code: 'invalid_request', message: error.message } }, error.status as 400);
+    if (error instanceof ConfigError) return configErrorResponse(c, error);
+    if (error instanceof HTTPException && error.status === 400) return c.json({ error: { code: 'invalid_request', message: error.message } }, 400);
     return c.json({ error: { code: 'internal_error', message: error.message, stack: error.stack } }, 500);
   })
 
@@ -110,8 +101,8 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
     if (!cassette) return c.json({ error: { code: 'not_found', message: 'cassette not found' } }, 404);
     return c.json({ ...cassette, recordings: services.corpus.list({ cassetteId: cassette.id, limit: 1000 }).items });
   })
-  .patch('/cassettes/:id', async c => {
-    const patch = await parseJsonBody(c.req.raw, cassettePatchSchema);
+  .patch('/cassettes/:id', jsonBody(cassettePatchSchema), c => {
+    const patch = c.req.valid('json');
     const cassette = services.corpus.updateCassette(c.req.param('id'), patch);
     return cassette ? c.json(cassette) : c.json({ error: { code: 'not_found', message: 'cassette not found' } }, 404);
   })
@@ -125,22 +116,26 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
     return stored ? c.json(scenarioView(stored)) : c.json({ error: { code: 'not_found', message: 'scenario not found' } }, 404);
   })
   // The body is the scenario's YAML (or JSON) source.
-  .put('/scenarios/:name', async c => c.json(scenarioView(services.config.upsertScenario(await c.req.text(), c.req.param('name')))))
-  .delete('/scenarios/:name', c => (services.config.deleteScenario(c.req.param('name')) ? c.body(null, 204) : c.json({ error: { code: 'not_found', message: 'scenario not found' } }, 404)))
+  .put('/scenarios/:name', async c => {
+    try { return c.json(scenarioView(services.config.upsertScenario(await c.req.text(), c.req.param('name'))), 200); } catch (error) { return configErrorResponse(c, error); }
+  })
+  .delete('/scenarios/:name', c => {
+    try { return services.config.deleteScenario(c.req.param('name')) ? c.body(null, 204) : c.json({ error: { code: 'not_found', message: 'scenario not found' } }, 404); } catch (error) { return configErrorResponse(c, error); }
+  })
   .post('/scenarios/:name/reset', c => {
     services.sessions.reset(c.req.param('name'));
     return c.body(null, 204);
   })
   // Plans a request against a scenario without sending anything: which
   // recording, which fault, and every write with its time.
-  .post('/scenarios/:name/preview', async c => {
+  .post('/scenarios/:name/preview', jsonBody(previewSchema), async c => {
     const stored = services.config.getScenario(c.req.param('name'));
     if (!stored) return c.json({ error: { code: 'not_found', message: 'scenario not found' } }, 404);
-    const input = await parseJsonBody(c.req.raw, previewSchema);
+    const input = c.req.valid('json');
     const path = input.path ?? '';
     const url = new URL(path || '/', 'http://flowmock.invalid');
     const endpoint = input.protocol === 'gemini-generate-content' ? matchEndpoint(url.pathname, url.search) : null;
-    if (input.protocol === 'gemini-generate-content' && !endpoint) throw new ConfigError('Gemini previews need the request path, e.g. /v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse');
+    if (input.protocol === 'gemini-generate-content' && !endpoint) return c.json({ error: { code: 'invalid_request', message: 'Gemini previews need the request path, e.g. /v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse' } }, 400);
     const prepared = prepareRequest({
       protocol: input.protocol,
       transport: input.transport,
@@ -177,11 +172,17 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
 // ── Keys and targets ──
 
   .get('/keys', c => c.json({ items: services.config.listKeys() }))
-  .post('/keys', async c => c.json(services.config.upsertKey(await parseJsonBody(c.req.raw, keyInputSchema)), 201))
+  .post('/keys', jsonBody(keyInputSchema), c => {
+    try { return c.json(services.config.upsertKey(c.req.valid('json')), 201); } catch (error) { return configErrorResponse(c, error); }
+  })
   .delete('/keys/:key', c => (services.config.deleteKey(c.req.param('key')) ? c.body(null, 204) : c.json({ error: { code: 'not_found', message: 'key not found' } }, 404)))
   .get('/targets', c => c.json({ items: services.config.listTargets().map(targetView) }))
-  .post('/targets', async c => c.json(targetView(services.config.upsertTarget(await parseJsonBody(c.req.raw, targetInputSchema))), 201))
-  .delete('/targets/:id', c => (services.config.deleteTarget(c.req.param('id')) ? c.body(null, 204) : c.json({ error: { code: 'not_found', message: 'target not found' } }, 404)))
+  .post('/targets', jsonBody(targetInputSchema), c => {
+    try { return c.json(targetView(services.config.upsertTarget(c.req.valid('json'))), 201); } catch (error) { return configErrorResponse(c, error); }
+  })
+  .delete('/targets/:id', c => {
+    try { return services.config.deleteTarget(c.req.param('id')) ? c.body(null, 204) : c.json({ error: { code: 'not_found', message: 'target not found' } }, 404); } catch (error) { return configErrorResponse(c, error); }
+  })
 
 // ── Observability ──
 

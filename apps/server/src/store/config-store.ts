@@ -37,9 +37,9 @@ export interface StoredScenario {
 }
 
 export class ConfigError extends Error {
-  readonly status: number;
+  readonly status: 400 | 404 | 409;
 
-  constructor(message: string, status = 400, options?: ErrorOptions) {
+  constructor(message: string, status: 400 | 404 | 409 = 400, options?: ErrorOptions) {
     super(message, options);
     this.status = status;
   }

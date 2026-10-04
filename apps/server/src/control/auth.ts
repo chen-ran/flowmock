@@ -4,6 +4,7 @@ import type { HttpBindings } from '@hono/node-server';
 import { Hono, type MiddlewareHandler } from 'hono';
 import { z } from 'zod';
 
+import { jsonBody } from './validation.ts';
 import type { Services } from '../services.ts';
 
 export type AdminEnv = { Bindings: HttpBindings; Variables: { adminVia: 'session' | 'admin-key' | 'open'; adminToken: string | null } };
@@ -37,14 +38,13 @@ const loginSchema = z.object({ key: z.string().min(1) }).strict();
 export const authRoutes = (services: Services) => {
   const failures = new Map<string, { count: number; at: number }>();
   return new Hono<AdminEnv>()
-    .post('/login', async c => {
-      const body = loginSchema.safeParse(await c.req.json().catch(() => null));
-      if (!body.success) return c.json({ error: { code: 'invalid_request', message: 'Expected a nonempty key in a JSON object.' } }, 400);
+    .post('/login', jsonBody(loginSchema), c => {
+      const body = c.req.valid('json');
       const now = Date.now();
       // Use the socket address, never an untrusted forwarding header.
       const address = c.env.incoming?.socket.remoteAddress ?? 'local';
       for (const [id, bucket] of failures) if (now - bucket.at >= 60_000) failures.delete(id);
-      if (services.adminKey !== null && !safeEqual(body.data.key, services.adminKey)) {
+      if (services.adminKey !== null && !safeEqual(body.key, services.adminKey)) {
         const bucket = failures.get(address) ?? { count: 0, at: now };
         failures.set(address, bucket);
         if (bucket.count >= 10) return c.json({ error: { code: 'rate_limited', message: 'Too many login failures; retry after one minute.' } }, 429, { 'retry-after': String(Math.ceil((60_000 - (now - bucket.at)) / 1000)) });
