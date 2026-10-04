@@ -1,0 +1,16 @@
+packages:
+  - packages/*
+  - apps/*
+
+# pnpm blocks lifecycle scripts by default. esbuild ships a prebuilt binary
+# for tsx and Vitest; unrs-resolver is the native binding behind the ESLint
+# TypeScript resolver.
+onlyBuiltDependencies:
+  - esbuild
+  - unrs-resolver
+
+# Optional install scripts of test-only SDK dependencies; nothing FlowMock
+# runs needs them.
+ignoredBuiltDependencies:
+  - '@google/genai'
+  - protobufjs

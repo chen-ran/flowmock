@@ -1,0 +1,34 @@
+{
+  "name": "@flowmock/protocols",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./common": {
+      "import": "./src/common/index.ts",
+      "types": "./src/common/index.ts"
+    },
+    "./anthropic-messages": {
+      "import": "./src/anthropic-messages/index.ts",
+      "types": "./src/anthropic-messages/index.ts"
+    },
+    "./openai-chat-completions": {
+      "import": "./src/openai-chat-completions/index.ts",
+      "types": "./src/openai-chat-completions/index.ts"
+    },
+    "./openai-responses": {
+      "import": "./src/openai-responses/index.ts",
+      "types": "./src/openai-responses/index.ts"
+    },
+    "./gemini-generate-content": {
+      "import": "./src/gemini-generate-content/index.ts",
+      "types": "./src/gemini-generate-content/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@flowmock/test-fixtures": "workspace:*"
+  }
+}

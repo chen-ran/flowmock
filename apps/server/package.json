@@ -1,0 +1,38 @@
+{
+  "name": "@flowmock/server",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "flowmock": "./bin/flowmock.js"
+  },
+  "exports": {
+    "./app-type": {
+      "types": "./src/app-type.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "start": "node bin/flowmock.js",
+    "generate:demo-corpus": "tsx scripts/generate-demo-corpus.ts"
+  },
+  "dependencies": {
+    "@flowmock/core": "workspace:*",
+    "@flowmock/protocols": "workspace:*",
+    "@hono/node-server": "^2.1.3",
+    "hono": "^4.13.13",
+    "tsx": "^4.23.15",
+    "undici": "^8.11.2",
+    "ws": "^8.22.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "@flowmock/test-fixtures": "workspace:*",
+    "@google/genai": "^2.27.0",
+    "@types/node": "^22",
+    "@types/ws": "^8.18.2",
+    "openai": "^7.27.0"
+  }
+}

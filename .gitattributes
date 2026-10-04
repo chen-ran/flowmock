@@ -1,0 +1,7 @@
+* text=auto eol=lf
+
+# Test material is collapsed in diffs and excluded from language statistics.
+**/__tests__/**  linguist-generated=true linguist-vendored=true
+
+# Checked-in generator output carries a `.generated.` infix.
+**/*.generated.*  linguist-generated=true

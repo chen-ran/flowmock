@@ -1,0 +1,19 @@
+{
+  "name": "@flowmock/core",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": { "import": "./src/index.ts", "types": "./src/index.ts" }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flowmock/protocols": "workspace:*",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@flowmock/test-fixtures": "workspace:*"
+  }
+}

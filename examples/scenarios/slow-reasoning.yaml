@@ -1,0 +1,9 @@
+# A reasoning model on a busy day: long and widely spread time to first
+# token, then a modest decode speed. Useful for client timeouts and
+# streaming UIs.
+name: slow-reasoning
+timing:
+  mode: synthetic
+  ttftMs: { dist: lognormal, p50: 8000, p95: 45000 }
+  tps: { dist: uniform, min: 20, max: 45 }
+  jitterMs: 15

@@ -1,0 +1,13 @@
+# Every failure mode in rotation, keyed by call number, for exercising a
+# client's retry and resume paths end to end.
+name: chaos
+timing: { mode: recorded, scale: 0.5 }
+faults:
+  - when: { everyN: 7 }
+    inject: { type: http_error, status: 529 }
+  - when: { everyN: 5 }
+    inject: { type: stream_error_event, at: { fraction: 0.5 }, from: { outcome: "stream_error:*" } }
+  - when: { everyN: 4 }
+    inject: { type: interrupt, at: { fraction: 0.6 }, mode: abort }
+  - when: { everyN: 3 }
+    inject: { type: interrupt, at: { fraction: 0.3 }, mode: hang, hangMs: 15000 }

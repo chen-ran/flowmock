@@ -1,0 +1,31 @@
+{
+  "name": "flowmock",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=22.19"
+  },
+  "scripts": {
+    "dev": "node apps/server/bin/flowmock.js",
+    "start": "node apps/server/bin/flowmock.js",
+    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test",
+    "lint": "eslint --cache .",
+    "lint:fix": "eslint --cache . --fix",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.4",
+    "@stylistic/eslint-plugin": "5.10.0",
+    "@types/node": "^22",
+    "@typescript-eslint/eslint-plugin": "8.71.0",
+    "@typescript-eslint/parser": "8.71.0",
+    "eslint": "9.39.4",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-import": "2.32.0",
+    "jiti": "2.7.0",
+    "typescript": "~5.9.3",
+    "vitest": "4.1.11"
+  }
+}

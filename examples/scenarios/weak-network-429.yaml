@@ -1,0 +1,21 @@
+# Lognormal time to first token, normally distributed decode speed, a slow
+# and jittery link that splits writes at arbitrary bytes, an occasional
+# silent stall, a recorded 429 on every session's third call, and a 5%
+# chance of a connection reset 40% into the output.
+name: weak-network-429
+selection: { mode: match-then-sample, sample: { outcome: ok, seed: 42 } }
+timing:
+  mode: synthetic
+  ttftMs: { dist: lognormal, p50: 800, p95: 3000 }
+  tps: { dist: normal, mean: 60, sd: 10 }
+network:
+  latencyMs: 80
+  jitterMs: 40
+  bandwidthKBps: 32
+  fragmentation: { maxBytes: 7 }
+  stalls: { probability: 0.02, durationMs: [2000, 20000] }
+faults:
+  - when: { callIndex: 3 }
+    inject: { type: http_error, from: { outcome: "http_error:429" }, headers: { retry-after: "2" } }
+  - when: { probability: 0.05 }
+    inject: { type: interrupt, at: { fraction: 0.4 }, mode: reset }

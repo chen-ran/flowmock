@@ -1,0 +1,48 @@
+# FlowMock example configuration.
+#
+#   pnpm start -- --config examples/flowmock.yaml
+#
+# Replays the bundled demo corpus with no upstream access. Point any client at
+# http://127.0.0.1:8787 (Anthropic, Gemini) or http://127.0.0.1:8787/v1
+# (OpenAI) and use one of the keys below as its API key.
+
+corpus:
+  - demo-corpus.generated.ndjson
+
+scenarioDir: scenarios
+
+keys:
+  # Faithful replay: exact or prefix match first, any successful recording
+  # of the protocol otherwise, recorded timing.
+  - key: fm-demo-replay
+    name: demo replay
+    replay: default
+  - key: fm-demo-weak-network
+    name: demo weak network
+    replay: weak-network-429
+  - key: fm-demo-slow-reasoning
+    name: demo slow reasoning
+    replay: slow-reasoning
+  - key: fm-demo-chaos
+    name: demo chaos
+    replay: chaos
+
+# Recording real traffic: give FlowMock the upstream credentials and bind a
+# key to the target. Every exchange through that key is stored and grouped
+# into a cassette per client session.
+#
+# targets:
+#   - id: anthropic
+#     baseUrl: https://api.anthropic.com
+#     headers: { x-api-key: "${ANTHROPIC_API_KEY}" }
+#   - id: openai
+#     baseUrl: https://api.openai.com
+#     headers: { authorization: "Bearer ${OPENAI_API_KEY}" }
+#   - id: gemini
+#     baseUrl: https://generativelanguage.googleapis.com
+#     headers: { x-goog-api-key: "${GEMINI_API_KEY}" }
+#
+# keys:
+#   - { key: fm-record-anthropic, record: anthropic }
+#   - { key: fm-record-openai, record: openai }
+#   - { key: fm-record-gemini, record: gemini }

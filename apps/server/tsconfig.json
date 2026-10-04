@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": ["node"]
+  },
+  "include": ["vitest.config.ts", "src/**/*.ts", "__tests__/**/*.ts", "scripts/**/*.ts"]
+}

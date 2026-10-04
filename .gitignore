@@ -1,0 +1,14 @@
+node_modules/
+.eslintcache
+*.tsbuildinfo
+coverage/
+dist/
+.env
+.idea/
+.claude/
+.superpowers/
+.pnpm-store/
+
+# Local runtime state (SQLite database and recorded chunk files).
+/data/
+apps/server/data/
