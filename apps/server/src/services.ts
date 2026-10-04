@@ -11,6 +11,7 @@ import { AdminSessions } from './store/admin-sessions.ts';
 import { ChunkFiles } from './store/chunk-files.ts';
 import { ConfigStore } from './store/config-store.ts';
 import { SqliteCorpus } from './store/corpus-store.ts';
+import { type TimelineOptions, TraceStore } from './store/trace-store.ts';
 import type { Clock } from '@flowmock/core';
 
 export interface Services {
@@ -27,6 +28,7 @@ export interface Services {
   adminKey: string | null;
   adminSessions: AdminSessions;
   live: LiveAggregator;
+  traces: TraceStore | null;
 }
 
 export interface ServiceOptions {
@@ -36,12 +38,14 @@ export interface ServiceOptions {
   clock?: Clock;
   cassetteIdleMs?: number;
   timelineSize?: number;
+  timeline?: TimelineOptions;
 }
 
 export const createServices = (options: ServiceOptions): Services => {
   const corpus = new SqliteCorpus(options.db, new ChunkFiles(options.chunkDir));
   const sessions = new SessionState();
-  const timeline = new Timeline(options.timelineSize);
+  const traces = options.timeline?.persist ? new TraceStore(options.db, options.timeline) : null;
+  const timeline = new Timeline(options.timelineSize, traces ?? undefined);
   const live = new LiveAggregator(() => sessions.active());
   timeline.subscribe(entry => live.observe(fromEntry(entry)));
   return {
@@ -52,6 +56,7 @@ export const createServices = (options: ServiceOptions): Services => {
     conversations: new ConversationMemory(),
     timeline,
     live,
+    traces,
     metrics: new Metrics(() => sessions.active()),
     cassettes: new CassetteTracker(corpus, options.cassetteIdleMs),
     clock: options.clock ?? nodeClock,

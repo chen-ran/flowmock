@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { applyConfigFile, expandEnv, loadConfigFile } from '../src/config-file.ts';
+import { applyConfigFile, expandEnv, loadConfigFile, runtimeConfig } from '../src/config-file.ts';
 import { startTestServer, type TestServer } from './support/flowmock.ts';
 
 let dir: string;
@@ -21,6 +21,15 @@ afterAll(async () => {
 });
 
 describe('flowmock.yaml', () => {
+  it('loads timeline settings and lets environment settings override them', async () => {
+    const path = join(dir, 'runtime.yaml');
+    await writeFile(path, 'timeline: { persist: true, retainDays: 2, maxEntries: 10 }\n');
+    const config = loadConfigFile(path, {});
+    expect(runtimeConfig(config, {}).timeline).toEqual({ persist: true, retainDays: 2, maxEntries: 10 });
+    expect(runtimeConfig(config, { FLOWMOCK_TIMELINE_PERSIST: '0', FLOWMOCK_TIMELINE_RETAIN_DAYS: '3', FLOWMOCK_TIMELINE_MAX: '12' }).timeline).toEqual({ persist: false, retainDays: 3, maxEntries: 12 });
+    expect(() => runtimeConfig(config, { FLOWMOCK_TIMELINE_MAX: 'NaN' })).toThrow();
+    expect(() => runtimeConfig(config, { FLOWMOCK_TIMELINE_PERSIST: 'yes' })).toThrow();
+  });
   it('expands environment variables and refuses unset ones', () => {
     expect(expandEnv('key: ${SECRET}', { SECRET: 'sk-1' })).toBe('key: sk-1');
     expect(() => expandEnv('key: ${MISSING}', {})).toThrow(/MISSING/);

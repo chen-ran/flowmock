@@ -9,6 +9,7 @@ import { createApp } from './app.ts';
 import { createUpgradeHandler } from './data-plane/websocket.ts';
 import { createServices, type Services } from './services.ts';
 import { openDatabase } from './store/database.ts';
+import type { TimelineOptions } from './store/trace-store.ts';
 import type { Clock } from '@flowmock/core';
 
 export interface StartOptions {
@@ -21,6 +22,8 @@ export interface StartOptions {
   adminKey?: string | null;
   clock?: Clock;
   cassetteIdleMs?: number;
+  timelineSize?: number;
+  timeline?: TimelineOptions;
 }
 
 export interface RunningServer {
@@ -39,7 +42,8 @@ export const startServer = async (options: StartOptions): Promise<RunningServer>
     throw new Error(`Refusing to listen on ${host} without FLOWMOCK_ADMIN_KEY: the control plane would be open to the network.`);
   }
   const db = openDatabase(options.databasePath ?? join(options.dataDir, 'flowmock.db'));
-  const services = createServices({ db, chunkDir: join(options.dataDir, 'chunks'), adminKey: options.adminKey ?? null, clock: options.clock, cassetteIdleMs: options.cassetteIdleMs });
+  const services = createServices({ db, chunkDir: join(options.dataDir, 'chunks'), adminKey: options.adminKey ?? null, clock: options.clock, cassetteIdleMs: options.cassetteIdleMs, timeline: options.timeline, timelineSize: options.timelineSize });
+  services.traces?.prune();
   const { app } = createApp(services);
 
   const listener = getRequestListener(app.fetch, {
@@ -66,12 +70,15 @@ export const startServer = async (options: StartOptions): Promise<RunningServer>
   });
   const { port } = server.address() as AddressInfo;
   const url = `http://${host.includes(':') ? `[${host}]` : host}:${port}`;
+  const maintenance = setInterval(() => { services.traces?.prune(); services.adminSessions.purgeExpired(); }, 10 * 60_000);
+  maintenance.unref();
   return {
     url,
     port,
     services,
     server,
     close: async () => {
+      clearInterval(maintenance);
       for (const client of wss.clients) client.terminate();
       wss.close();
       server.closeAllConnections();

@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
-import { applyConfigFile, loadConfigFile } from './config-file.ts';
+import { applyConfigFile, loadConfigFile, runtimeConfig } from './config-file.ts';
 import { startServer } from './server.ts';
 import { FLOWMOCK_VERSION } from './version.ts';
 
@@ -39,6 +39,7 @@ const configPath = values.config ?? env.FLOWMOCK_CONFIG;
 // A broken config fails before anything listens.
 const config = configPath === undefined ? null : loadConfigFile(resolve(configPath));
 const running = await startServer({
+  ...runtimeConfig(config, env),
   host: values.host ?? env.FLOWMOCK_HOST ?? '127.0.0.1',
   port: Number(values.port ?? env.FLOWMOCK_PORT ?? 8787),
   dataDir: resolve(values.data ?? env.FLOWMOCK_DATA_DIR ?? 'data'),

@@ -188,8 +188,9 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
   .get('/live', c => liveStream(c, services))
   .get('/requests/stream', c => requestStream(c, services))
   .get('/requests', c => {
-    const limit = Math.min(1000, Number(c.req.query('limit') ?? 100));
-    return c.json({ items: services.timeline.list(limit, { mode: c.req.query('mode'), keyName: c.req.query('key') }) });
+    const limit = Number(c.req.query('limit') ?? 100);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 1000) return c.json({ error: { code: 'invalid_request', message: 'limit must be an integer between 1 and 1000' } }, 400);
+    return c.json({ items: services.timeline.list(limit, { before: c.req.query('before'), mode: c.req.query('mode'), keyName: c.req.query('key'), protocol: c.req.query('protocol'), outcome: c.req.query('outcome') }) }, 200);
   })
   .get('/requests/:id', c => {
     const entry = services.timeline.get(c.req.param('id'));

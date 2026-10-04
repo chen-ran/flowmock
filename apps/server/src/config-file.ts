@@ -20,9 +20,26 @@ const configFileSchema = z.object({
   // Portable corpus files (`/api/export` output) imported at startup,
   // relative to the config file. Imports keep ids, so restarts are no-ops.
   corpus: z.array(z.string()).default([]),
+  timeline: z.object({
+    persist: z.boolean().default(false),
+    retainDays: z.number().positive().default(7),
+    maxEntries: z.number().int().positive().default(100_000),
+  }).strict().default({ persist: false, retainDays: 7, maxEntries: 100_000 }),
 }).strict();
 
 export type ConfigFile = z.infer<typeof configFileSchema>;
+
+export const runtimeConfig = (config: ConfigFile | null, env: NodeJS.ProcessEnv = process.env) => {
+  const persist = env.FLOWMOCK_TIMELINE_PERSIST;
+  if (persist !== undefined && !['0', '1', 'false', 'true'].includes(persist)) throw new Error('FLOWMOCK_TIMELINE_PERSIST must be 0, 1, false or true');
+  return {
+    timeline: configFileSchema.shape.timeline.parse({
+      persist: persist === undefined ? config?.timeline.persist : persist === '1' || persist === 'true',
+      retainDays: env.FLOWMOCK_TIMELINE_RETAIN_DAYS === undefined ? config?.timeline.retainDays : Number(env.FLOWMOCK_TIMELINE_RETAIN_DAYS),
+      maxEntries: env.FLOWMOCK_TIMELINE_MAX === undefined ? config?.timeline.maxEntries : Number(env.FLOWMOCK_TIMELINE_MAX),
+    }),
+  };
+};
 
 export const expandEnv = (text: string, env: NodeJS.ProcessEnv = process.env): string =>
   text.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (_match, name: string) => {
