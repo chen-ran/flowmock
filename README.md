@@ -258,6 +258,11 @@ FlowMock answers with its own diagnostic error rather than inventing one.
 | `--data` | `FLOWMOCK_DATA_DIR` | `./data` | Database and recorded chunks |
 | `--config` | `FLOWMOCK_CONFIG` | none | `flowmock.yaml` applied at startup |
 | | `FLOWMOCK_ADMIN_KEY` | none | Bearer token for `/api` and `/metrics` |
+| | `FLOWMOCK_TIMELINE_PERSIST` | `0` | Store the request timeline in SQLite (`1` enables it) |
+| | `FLOWMOCK_TIMELINE_RETAIN_DAYS` | `7` | Persistent timeline retention in days |
+| | `FLOWMOCK_TIMELINE_MAX` | `100000` | Maximum persistent timeline entries |
+| | `FLOWMOCK_WEB_DIST_DIR` | `../web/dist/client` | Dashboard build directory, relative to `apps/server` |
+| | `FLOWMOCK_SHUTDOWN_GRACE_MS` | `10000` | Time to drain HTTP and WebSocket streams on shutdown |
 
 Without `FLOWMOCK_ADMIN_KEY` the admin API is open, so FlowMock refuses to
 listen on anything but a loopback address.
@@ -266,6 +271,21 @@ listen on anything but a loopback address.
 (a directory of scenario files) and `corpus` (exported corpus files imported at
 startup). Entries are upserted on every start; entries created through the API
 are left alone. See [`examples/flowmock.yaml`](examples/flowmock.yaml).
+
+Runtime settings also support YAML; environment variables take precedence:
+
+```yaml
+timeline: { persist: true, retainDays: 7, maxEntries: 100000 }
+webDistDir: ../web/dist/client
+shutdownGraceMs: 10000
+```
+
+On SIGINT or SIGTERM, FlowMock stops accepting new work and waits for active
+streams. Exchanges cut off at the deadline are saved as `truncated` before
+SQLite closes. A second signal exits immediately. Dashboard GET/HEAD routes
+serve the static build with SPA fallback; `/assets/` files have immutable
+caching, while API and data-plane paths always reach the server. A missing
+dashboard build returns 503 on dashboard routes.
 
 ## Inspecting replays
 
@@ -293,18 +313,44 @@ TPS.
 
 ## Admin API
 
-All routes live under `/api` and require `Authorization: Bearer
-$FLOWMOCK_ADMIN_KEY` when that variable is set.
+All routes live under `/api`. When `FLOWMOCK_ADMIN_KEY` is set, authenticate
+with `Authorization: Bearer <admin-key>` or `x-flowmock-admin-session: <token>`.
+`GET /api/health` and `POST /api/auth/login` are public. Login exchanges
+`{ "key": "<admin-key>" }` for `{ token, expiresAt }`; only a SHA-256 token hash
+is stored. Sessions have a sliding seven-day lifetime and are revoked on
+logout. Without a configured admin key, any nonempty login key is accepted
+on loopback and `/api/auth/me` reports `open` for requests without credentials.
+
+```bash
+curl -s http://127.0.0.1:8787/api/auth/login \
+  -H 'content-type: application/json' -d '{"key":"your-admin-key"}'
+# Copy the returned token into the admin-session header.
+curl -N http://127.0.0.1:8787/api/live \
+  -H 'x-flowmock-admin-session: <token>'
+```
+
+`GET /api/live` emits `snapshot` events every second with active requests,
+a ten-second completion rate, and sixty-second protocol/error/fault counts
+and TTFT/TPS quantiles. `GET /api/requests/stream` emits lightweight `request`
+events when a trace is added. Both streams send keep-alive comments every
+fifteen seconds and accept `?session=<token>` for browser EventSource clients.
+Query credentials are accepted only on these two GET routes. The data-plane
+header `x-flowmock-session` names a replay/recording session and is independent
+of admin authentication.
 
 | Route | Purpose |
 |---|---|
-| `GET /recordings`, `GET /recordings/:id`, `GET /recordings/:id/body`, `DELETE /recordings/:id` | Browse the corpus, decoded frames included. Filters: `protocol`, `model`, `outcome`, `cassette`, `session`, `limit`, `offset`. |
+| `POST /auth/login`, `GET /auth/me`, `DELETE /auth/session` | Login, inspect authentication and revoke the current admin session. |
+| `GET /recordings`, `GET /recordings/:id`, `GET /recordings/:id/body`, `DELETE /recordings/:id` | Browse the corpus, decoded frames included. Filters: `protocol`, `model`, `outcome`, `cassette`, `session`, `q` (case-insensitive body substring), `before` (recording id), `limit`, `offset`. |
+| `POST /recordings/delete` | Delete `{ ids: [...] }` in one database transaction, remove chunk files and return `{ deleted }`. |
+| `GET /stats` | Total recording count and body bytes, plus `byProtocol`, `byOutcome` and `byModel` groups, each with counts and bytes. |
 | `GET /cassettes`, `GET/PATCH/DELETE /cassettes/:id` | Recording sessions; `closed: true` starts a new cassette on the next request; `DELETE ?recordings=true` deletes the recordings too. |
 | `GET /scenarios`, `GET/PUT/DELETE /scenarios/:name` | Scenarios; `PUT` takes YAML or JSON. |
 | `POST /scenarios/:name/preview`, `POST /scenarios/:name/reset` | Plan a request without sending it; clear call counters and time-window epochs. |
 | `GET/POST /keys`, `DELETE /keys/:key` | Key bindings. |
 | `GET/POST /targets`, `DELETE /targets/:id` | Record targets (secrets masked). |
-| `GET /requests`, `GET /requests/:id` | The request timeline. |
+| `GET /requests`, `GET /requests/:id` | Request timeline with `before`, `limit`, `mode`, `key` (key name), `protocol` and `outcome` filters. |
+| `GET /live`, `GET /requests/stream` | Live metrics and completed request summaries over SSE. |
 | `GET /export`, `POST /import` | Portable NDJSON corpus. |
 | `GET /schema/scenario`, `GET /transforms` | Schemas for editors. |
 | `GET /health` | Version and liveness. |
@@ -322,7 +368,9 @@ $FLOWMOCK_ADMIN_KEY` when that variable is set.
 ## Limitations
 
 - No web UI yet.
-- The request timeline is kept in memory (the last 1000 requests).
+- The request timeline defaults to the last 1000 requests in memory. Optional
+  SQLite persistence keeps it across restarts, caps stored traces at 500 frame
+  summaries and prunes expired entries at startup and every ten minutes.
 - With no matching error recording and no explicit `status`, error faults are
   reported instead of synthesized.
 - A streaming request cannot be served from a non-streaming recording.
@@ -354,8 +402,9 @@ coding agents are in [AGENTS.md](AGENTS.md).
 
 The follow-up work is planned in [`docs/superpowers/plans`](docs/superpowers/plans):
 
-1. Control plane: browser sessions, live metrics over SSE, a persistent
-   timeline, static hosting of the web app, graceful shutdown.
+1. Control plane completed: browser sessions, live metrics and request events
+   over SSE, optional persistent timeline, static hosting, graceful shutdown,
+   typed client contracts, and corpus search, pagination and bulk deletion.
 2. Fidelity and transforms: synthesized protocol errors, streams synthesized
    from non-streaming recordings, token truncation, text and tool-name
    rewriting, templated responses, `previous_response_not_found`, RPM/TPM

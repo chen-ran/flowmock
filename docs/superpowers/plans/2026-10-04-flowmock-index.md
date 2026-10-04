@@ -8,9 +8,9 @@
 
 **Tech Stack:** Node 22.19+/24、TypeScript 5.9、pnpm 10、Hono 4 + `@hono/node-server`、`ws`、`undici`、`node:sqlite`、zod 4、yaml、Vitest 4；前端阶段增加 React 19、React Router 8（SPA）、Fluent UI v9、`@fluentui/react-charts`、i18next、Monaco + monaco-yaml、UnoCSS、Vite 8。
 
-## 当前状态（2026-10-04，MVP 完成）
+## 当前状态（2026-10-04，阶段 6 完成）
 
-最初设计计划（九个阶段，计划文件本身不纳入仓库，阶段划分见下表）的 1–5 阶段已经完成，第 6 阶段完成了最小集。`pnpm run verify`（lint、typecheck、203 个测试）全部通过。
+最初设计计划（九个阶段，计划文件本身不纳入仓库，阶段划分见下表）的 1–6 阶段已经完成。`pnpm run verify`（lint、typecheck、235 个测试）在本地 Node 24.14.1 全部通过。
 
 | 原阶段 | 状态 | 交付内容 |
 |---|---|---|
@@ -19,7 +19,7 @@
 | 3 引擎 | 完成 | 语料分析（outcome、usage、TTFT/TPS）、四协议请求规范化与指纹、match/prefix/sequence/sample 选取、变换注册表、rewrite/timing/fault/network 变换、回放计划、runner、`Clock`/`HttpTransport`/`MessageTransport`/`CorpusStore` 契约、假时钟测试 |
 | 4 服务端回放 | 完成 | 五种数据面入口（含 Responses WS 多轮与 `previous_response_id` 记忆）、逐字节调度、FIN/abort/RST/hang、`node:sqlite` 迁移与 `.fmc` 块文件、`/v1/models` 与 Gemini models、真实 socket 集成测试（官方 Anthropic/OpenAI/GenAI SDK） |
 | 5 录制代理 | 完成 | HTTP 与 WS 转发、逐块计时、鉴权头脱敏、gzip/br 解码、cassette 自动归档、录制先落盘再结束响应 |
-| 6 控制面 | 部分完成 | Bearer 管理密钥、语料/cassette/场景/key/目标 CRUD、场景预览、请求时间线、`/metrics`、JSON Schema、变换列表、NDJSON 导入导出、`flowmock.yaml`；**未做**：session 登录、实时指标 SSE、时间线持久化、静态前端托管 |
+| 6 控制面 | 完成 | Bearer 与持久化管理 session；语料/cassette/场景/key/目标 CRUD；语料搜索/分页/批量删除/统计；场景预览；时间线可选落库；两路实时 SSE；静态托管；HTTP/WS 优雅停机；类型化客户端契约；原有 metrics/schema/导入导出/配置 |
 | 7 UI 包 | 未开始 | 见阶段 7 计划 |
 | 8 管理平台 | 未开始 | 见阶段 8 计划 |
 | 9 可选 | 未开始 | 见阶段 9 计划 |
@@ -72,9 +72,9 @@ export const registerTransform: <Config>(definition: TransformDefinition<Config>
 
 | 差距 | 归属 |
 |---|---|
-| 管理 API 只有 Bearer 管理密钥，没有浏览器 session | 阶段 6 |
-| 时间线只在内存环形缓冲区，重启即丢失；每条记录最多 2000 帧摘要 | 阶段 6 |
-| 进程退出时直接断开进行中的流 | 阶段 6 |
+| 管理 API 支持 Bearer 与浏览器 session | 阶段 6 已完成 |
+| 时间线默认内存模式，可选持久化并保留 500 帧摘要 | 阶段 6 已完成 |
+| 进程退出时在宽限期内等待 HTTP/WS 流，超时录制先落库 | 阶段 6 已完成 |
 | 没有对应状态码的录制样本且未给出 `status` 时，`http_error` 报 FlowMock 诊断错误，不合成 | F |
 | 只有非流式录制时无法服务流式请求（选取阶段直接过滤） | F |
 | Responses WS 对未知 `previous_response_id` 宽松处理，不返回 `previous_response_not_found` | F |

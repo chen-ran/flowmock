@@ -1,6 +1,6 @@
 # FlowMock 阶段 6：控制面补完 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 补齐管理平台需要的控制面能力：管理密钥换取浏览器 session、实时指标与请求事件 SSE、请求时间线可选落库、托管前端静态产物、优雅停机，以及类型化客户端契约测试。
 
@@ -33,7 +33,7 @@
 - Produces: `POST /api/auth/login {key}` → `201 {token, expiresAt}`；`GET /api/auth/me` → `{via: 'session' | 'admin-key' | 'open'}`；`DELETE /api/auth/session` → `204`。
 - Produces: `adminAuth(services)` 中间件，顺序检查 Bearer 管理密钥、`x-flowmock-admin-session`、（仅 GET `/api/live` 与 `/api/requests/stream`）`?session=`。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 // apps/server/__tests__/control/auth_test.ts
@@ -78,12 +78,12 @@ describe('admin sessions', () => {
 
 注意：登录失败计数需要按客户端地址分桶，测试里所有请求来自 127.0.0.1，第 11 次返回 429；`ADMIN_KEY` 已在 `__tests__/support/flowmock.ts` 导出。
 
-- [ ] **Step 2: 运行测试确认 RED**
+- [x] **Step 2: 运行测试确认 RED**
 
 Run: `pnpm --filter @flowmock/server exec vitest run __tests__/control/auth_test.ts`
 Expected: FAIL，`/api/auth/login` 返回 401（现有中间件要求 Bearer）。
 
-- [ ] **Step 3: 实现迁移与存储**
+- [x] **Step 3: 实现迁移与存储**
 
 ```sql
 -- apps/server/src/store/migrations/0002_admin_sessions.sql
@@ -97,7 +97,7 @@ CREATE TABLE admin_sessions (
 
 `admin-sessions.ts` 只保存 token 的 SHA-256（`node:crypto` 的 `createHash`），token 本身用 `randomBytes(32).toString('base64url')` 生成。滑动过期 7 天：`touch()` 在剩余有效期不足一半时把 `expires_at` 推到 `now + 7d`。提供 `create()`、`verify(token)`、`revoke(token)`、`purgeExpired(now)`。
 
-- [ ] **Step 4: 实现中间件与路由**
+- [x] **Step 4: 实现中间件与路由**
 
 `control/auth.ts` 要点：
 - 登录失败计数：`Map<address, {failures, windowStart}>`，60 秒窗口内第 11 次起返回 `429`，成功登录清零。地址取 `c.env.incoming.socket.remoteAddress`。
@@ -105,12 +105,12 @@ CREATE TABLE admin_sessions (
 - 比较管理密钥继续使用 `timingSafeEqual`。
 - 路由 `/auth/login` 与 `/health` 免认证；其余 `/api/*` 走中间件。
 
-- [ ] **Step 5: 验证 GREEN 并跑全量**
+- [x] **Step 5: 验证 GREEN 并跑全量**
 
 Run: `pnpm --filter @flowmock/server exec vitest run __tests__/control/auth_test.ts && pnpm run verify`
 Expected: 全部 PASS；已有 `control_test.ts` 的 Bearer 用例保持通过。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add apps/server
@@ -145,7 +145,7 @@ export interface LiveSnapshot {
 
 - Produces: `GET /api/live` SSE：每秒一个 `event: snapshot`，每 15 秒一个 `: keep-alive` 注释；`GET /api/requests/stream` SSE：每条新时间线记录一个 `event: request`（只含 id、startedAt、mode、keyName、protocol、transport、status、outcome、recordingId、achievedTtftMs、achievedTps、fault 类型）。
 
-- [ ] **Step 1: 写聚合器单测（假时间）**
+- [x] **Step 1: 写聚合器单测（假时间）**
 
 ```ts
 // apps/server/__tests__/state/live_test.ts
@@ -175,24 +175,24 @@ describe('LiveAggregator', () => {
 
 分位数使用最近邻排名法（nearest-rank），窗口 60 秒，样本保存在按时间有序的数组中并在 `snapshot` 时裁剪。
 
-- [ ] **Step 2: 运行确认 RED**
+- [x] **Step 2: 运行确认 RED**
 
 Run: `pnpm --filter @flowmock/server exec vitest run __tests__/state/live_test.ts`
 Expected: FAIL，模块不存在。
 
-- [ ] **Step 3: 实现 `state/live.ts` 并接入时间线**
+- [x] **Step 3: 实现 `state/live.ts` 并接入时间线**
 
 `services.ts` 中 `timeline.subscribe(entry => live.observe(fromEntry(entry)))`；`fromEntry` 取 `entry.result?.achievedTtftMs`、`achievedTps`、`entry.trace?.fault?.type`，`ok` 为 `status < 400 && outcome` 属于 `completed | ok | proxied`。
 
-- [ ] **Step 4: 写 SSE 集成测试**
+- [x] **Step 4: 写 SSE 集成测试**
 
-用 `fetch` 打开 `/api/live`（Bearer 头），读取到第一个 `event: snapshot` 后发起一次回放请求，再读到 `activeRequests` 或 `requestsPerSecond` 变化；`/api/requests/stream` 在回放后 2 秒内收到对应 `event: request`，其 `id` 等于响应头 `x-flowmock-request-id`。客户端断开后服务端必须清理订阅（断言 `timeline` 的监听者数量回到 0，为此给 `Timeline` 增加只读 `listenerCount`）。
+用 `fetch` 打开 `/api/live`（Bearer 头），读取到第一个 `event: snapshot` 后发起一次回放请求，再读到 `activeRequests` 或 `requestsPerSecond` 变化；`/api/requests/stream` 在回放后 2 秒内收到对应 `event: request`，其 `id` 等于响应头 `x-flowmock-request-id`。客户端断开后服务端必须清理订阅（断言 `timeline` 的监听者数量回到连接前的基线（聚合器常驻一个监听者），为此给 `Timeline` 增加只读 `listenerCount`）。
 
-- [ ] **Step 5: 实现两个 SSE 路由**
+- [x] **Step 5: 实现两个 SSE 路由**
 
 使用 Hono `streamSSE`（`hono/streaming`）。`/api/live` 用 `setInterval` 每秒推送；在 `stream.onAbort` 中清除定时器与订阅。`?session=` 只对这两个路径生效。
 
-- [ ] **Step 6: 验证并提交**
+- [x] **Step 6: 验证并提交**
 
 Run: `pnpm run verify`
 Expected: PASS。
@@ -231,11 +231,11 @@ CREATE TABLE request_traces (
 CREATE INDEX request_traces_by_time ON request_traces (started_at DESC);
 ```
 
-- [ ] **Step 1: 写失败测试**：开启持久化启动服务 → 回放 3 次 → 关闭 → 用同一数据目录重启 → `GET /api/requests` 仍返回 3 条，按时间倒序；`before` 游标翻页正确；超过 `maxEntries` 时最旧的被删除；`retainDays` 过期清理由 `TraceStore.prune(now)` 完成并单测覆盖。
-- [ ] **Step 2: 确认 RED**：`pnpm --filter @flowmock/server exec vitest run __tests__/control/timeline_test.ts` 失败。
-- [ ] **Step 3: 实现**：`Timeline.add` 在持久化开启时同步写入（`node:sqlite` 同步 API，单条 INSERT 开销可忽略）；内存环形缓冲区继续作为热缓存；`list` 先查内存，游标越过内存范围后查库。服务端每 10 分钟调用一次 `prune`，定时器在 `close()` 中清除。
-- [ ] **Step 4: 验证 GREEN**：`pnpm run verify`。
-- [ ] **Step 5: 提交**：`git commit -am "feat(server): persist the request timeline on demand"`
+- [x] **Step 1: 写失败测试**：开启持久化启动服务 → 回放 3 次 → 关闭 → 用同一数据目录重启 → `GET /api/requests` 仍返回 3 条，按时间倒序；`before` 游标翻页正确；超过 `maxEntries` 时最旧的被删除；`retainDays` 过期清理由 `TraceStore.prune(now)` 完成并单测覆盖。
+- [x] **Step 2: 确认 RED**：`pnpm --filter @flowmock/server exec vitest run __tests__/control/timeline_test.ts` 失败。
+- [x] **Step 3: 实现**：`Timeline.add` 在持久化开启时同步写入（`node:sqlite` 同步 API，单条 INSERT 开销可忽略）；内存环形缓冲区继续作为热缓存；`list` 与 `get` 在持久化开启时以数据库为准，确保筛选跨越热缓存、重启和保留清理后仍然一致；未开启时使用内存缓存。服务端每 10 分钟调用一次 `prune`，定时器在 `close()` 中清除。
+- [x] **Step 4: 验证 GREEN**：`pnpm run verify`。
+- [x] **Step 5: 提交**：`git commit -am "feat(server): persist the request timeline on demand"`
 
 ---
 
@@ -252,10 +252,10 @@ CREATE INDEX request_traces_by_time ON request_traces (started_at DESC);
 - 其余 GET/HEAD：先找文件（`/assets/*` 带 `cache-control: public, max-age=31536000, immutable`），找不到且不是 `/assets/` 时回退 `index.html`（`no-cache`）；dist 不存在时返回 503 并提示先构建前端。
 - 支持 `ETag`/`If-None-Match` 与 `304`；拒绝 `..` 路径穿越。
 
-- [ ] **Step 1: 写失败测试**：临时目录放 `index.html` 与 `assets/app-abc.js`，断言 `/` 与 `/scenarios/x` 返回 index、`/assets/app-abc.js` 带 immutable 缓存头、`/assets/missing.js` 404、`/v1/unknown` 走 Hono 404 JSON、`/%2e%2e/secret` 404、带 `If-None-Match` 返回 304。
-- [ ] **Step 2: 确认 RED**。
-- [ ] **Step 3: 实现**（流式读文件用 `Readable.toWeb(createReadStream(path))`）。
-- [ ] **Step 4: 验证 GREEN 并提交**：`git commit -am "feat(server): serve the management app's static build"`
+- [x] **Step 1: 写失败测试**：临时目录放 `index.html` 与 `assets/app-abc.js`，断言 `/` 与 `/scenarios/x` 返回 index、`/assets/app-abc.js` 带 immutable 缓存头、`/assets/missing.js` 404、`/v1/unknown` 走 Hono 404 JSON、`/%2e%2e/secret` 404、带 `If-None-Match` 返回 304。
+- [x] **Step 2: 确认 RED**。
+- [x] **Step 3: 实现**（流式读文件用 `Readable.toWeb(createReadStream(path))`）。
+- [x] **Step 4: 验证 GREEN 并提交**：`git commit -am "feat(server): serve the management app's static build"`
 
 ---
 
@@ -271,10 +271,10 @@ CREATE INDEX request_traces_by_time ON request_traces (started_at DESC);
 **Interfaces:**
 - `InflightTracker`：`track<T>(work: Promise<T>): Promise<T>`、`drain(timeoutMs): Promise<{ drained: boolean; remaining: number }>`。
 
-- [ ] **Step 1: 写失败测试**：场景 `synthetic ttftMs: 400` 发起流式请求，收到响应头后立刻调用 `close({ graceMs: 2000 })`，断言客户端完整读到 `message_stop`，且 `close` 在流结束后才 resolve；第二个用例 `graceMs: 50` 时流被中断、`close` 在约 50ms 后 resolve。
-- [ ] **Step 2: 确认 RED**（当前 `close` 立即 `closeAllConnections`）。
-- [ ] **Step 3: 实现**：先 `server.close()` 停止接受新连接，再 `inflight.drain(graceMs)`，超时后 `closeAllConnections()` 并终止 WS 客户端；录制中的交换在超时被切断时照常以 `truncated` 落库。
-- [ ] **Step 4: 验证 GREEN 并提交**：`git commit -am "feat(server): drain in-flight streams on shutdown"`
+- [x] **Step 1: 写失败测试**：场景 `synthetic ttftMs: 400` 发起流式请求，收到响应头后立刻调用 `close({ graceMs: 2000 })`，断言客户端完整读到 `message_stop`，且 `close` 在流结束后才 resolve；第二个用例 `graceMs: 50` 时流被中断、`close` 在约 50ms 后 resolve。
+- [x] **Step 2: 确认 RED**（当前 `close` 立即 `closeAllConnections`）。
+- [x] **Step 3: 实现**：先 `server.close()` 停止接受新连接，再 `inflight.drain(graceMs)`，超时后 `closeAllConnections()` 并终止 WS 客户端；录制中的交换在超时被切断时照常以 `truncated` 落库。
+- [x] **Step 4: 验证 GREEN 并提交**：`git commit -am "feat(server): drain in-flight streams on shutdown"`
 
 ---
 
@@ -284,10 +284,10 @@ CREATE INDEX request_traces_by_time ON request_traces (started_at DESC);
 - Modify: `apps/server/src/control/routes.ts`（确保所有路由链式声明且返回 `c.json(...)` 带状态码，以便 `hc` 推断）
 - Create: `apps/server/__tests__/control/app-type_test.ts`
 
-- [ ] **Step 1: 写测试**：用 `hc<AppType>(`${flowmock.url}/api`, { headers: { authorization: `Bearer ${ADMIN_KEY}` } })` 调用 `scenarios.$get()`、`scenarios[':name'].preview.$post(...)`、`keys.$post(...)`，对返回 JSON 的字段做类型层与运行时双重断言（类型层用 `expectTypeOf` 断言 `items[number].name` 为 `string`）。
-- [ ] **Step 2: 确认类型错误或运行失败**（若当前推断已完整，则此步记录为“已满足”，仍保留测试防回归）。
-- [ ] **Step 3: 补齐**：把 `ConfigError` 等抛出路径改为显式 `c.json(..., status)`，避免 `hc` 把所有错误推断为 `unknown`。
-- [ ] **Step 4: 验证并提交**：`git commit -am "test(server): pin the typed control-plane client contract"`
+- [x] **Step 1: 写测试**：用 `hc<AppType>(`${flowmock.url}/api`, { headers: { authorization: `Bearer ${ADMIN_KEY}` } })` 调用 `scenarios.$get()`、`scenarios[':name'].preview.$post(...)`、`keys.$post(...)`，对返回 JSON 的字段做类型层与运行时双重断言（类型层用 `expectTypeOf` 断言 `items[number].name` 为 `string`）。
+- [x] **Step 2: 确认类型错误或运行失败**（若当前推断已完整，则此步记录为“已满足”，仍保留测试防回归）。
+- [x] **Step 3: 补齐**：把 `ConfigError` 等抛出路径改为显式 `c.json(..., status)`，避免 `hc` 把所有错误推断为 `unknown`。
+- [x] **Step 4: 验证并提交**：`git commit -am "test(server): pin the typed control-plane client contract"`
 
 ---
 
@@ -297,15 +297,25 @@ CREATE INDEX request_traces_by_time ON request_traces (started_at DESC);
 - Modify: `apps/server/src/store/corpus-store.ts`、`apps/server/src/control/routes.ts`
 - Test: `apps/server/__tests__/control/corpus_test.ts`
 
-- [ ] **Step 1: 写失败测试**：`GET /api/recordings?q=weather` 在请求体 JSON 中做大小写不敏感的子串搜索；`POST /api/recordings/delete {ids}` 批量删除并返回删除数；`GET /api/recordings?before=<id>` 游标分页；`GET /api/stats` 返回各协议、outcome、模型的录制数与总字节数。
-- [ ] **Step 2: 确认 RED**。
-- [ ] **Step 3: 实现**：`q` 使用 `instr(lower(request), lower(?)) > 0`；批量删除在一个事务中删除行，块文件逐个删除；统计用 `GROUP BY`。
-- [ ] **Step 4: 验证并提交**：`git commit -am "feat(server): search, page and bulk-delete the corpus"`
+- [x] **Step 1: 写失败测试**：`GET /api/recordings?q=weather` 在请求体 JSON 中做大小写不敏感的子串搜索；`POST /api/recordings/delete {ids}` 批量删除并返回删除数；`GET /api/recordings?before=<id>` 游标分页；`GET /api/stats` 返回各协议、outcome、模型的录制数与总字节数。
+- [x] **Step 2: 确认 RED**。
+- [x] **Step 3: 实现**：`q` 使用 `instr(lower(json_extract(request, '$.body')), lower(?)) > 0`，仅搜索正文；批量删除在一个事务中删除行，块文件逐个删除；统计用 `GROUP BY`。
+- [x] **Step 4: 验证并提交**：`git commit -am "feat(server): search, page and bulk-delete the corpus"`
 
 ---
 
 ## 阶段验收
 
-- [ ] `pnpm run verify` 通过。
-- [ ] 手工验证：`pnpm start -- --config examples/flowmock.yaml` 后用 curl 登录拿到 session，`curl -N -H 'x-flowmock-admin-session: …' /api/live` 每秒输出快照；对 `fm-demo-replay` 发请求时 `/api/requests/stream` 出现对应事件。
-- [ ] 开启持久化后重启，时间线保留。
+- [x] `pnpm run verify` 通过。
+- [x] 手工验证：`pnpm start -- --config examples/flowmock.yaml` 后用 curl 登录拿到 session，`curl -N -H 'x-flowmock-admin-session: …' /api/live` 每秒输出快照；对 `fm-demo-replay` 发请求时 `/api/requests/stream` 出现对应事件。
+- [x] 开启持久化后重启，时间线保留。
+
+## 实施记录（2026-10-04）
+
+- 七项任务已分别提交在 `codex/phase-6-control-plane`；Floway 参考修订为 `c7e4d782763b010e44ba243588f2c83c90c97335`，仅移植静态托管模块，来源已登记到 `NOTICE.md`。
+- 本地 Node 24.14.1 执行根 `pnpm run verify`，38 个测试文件、235 个测试全部通过；新增测试覆盖 token 哈希/续期/撤销、SSE 清理、时间线重启/分页/容量/过期/帧上限、静态缓存/越界、HTTP 与 WS 正常/超时停机、hc 输入输出与错误状态、批量删除事务/文件/缓存及并发读取竞态。
+- 实际以 `pnpm start -- --config examples/flowmock.yaml` 启动，使用临时数据目录和环境变量开启鉴权/持久化。curl 验证登录、两路 SSE、`fm-demo-replay` 回放；19 条示例录制载入，重启后请求 id 与管理 session 保留，两次 SIGTERM 正常退出（0）。
+- 正常 WS 停机等待最后事件的发送回调并在剩余宽限期内关闭握手；超时后切断连接，但等待录制收尾再关闭 SQLite。管理 SSE 主动清理，停机后的 WS 新 turn 返回 503。
+- 语料普通列表按 `(created_at DESC, id DESC)` 稳定分页，cassette 筛选保持原有序号顺序。`total` 表示筛选后的总录制数，不随游标缩减。统计字节数为响应正文块的总大小。
+- `hc` 通过路由边界的 schema 推断 JSON 输入（默认参数可省略）与查询参数；修正 ESLint 的 type-only 导出例外，运行时导入仍被禁止。
+- 新增运行配置均支持环境变量优先于 YAML；README 已说明默认值及接口。UI 包、管理前端和其他后续阶段保持在各自计划中。
