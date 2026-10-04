@@ -16,6 +16,28 @@ beforeEach(async () => {
 afterEach(async () => { await flowmock.stop(); });
 
 describe('corpus management', () => {
+  it('does not repopulate the replay cache when a pending load finishes after deletion', async () => {
+    const id = flowmock.services.corpus.list().items[0].id;
+    let loaded!: () => void;
+    let release!: () => void;
+    const ready = new Promise<void>(resolve => { loaded = resolve; });
+    const blocked = new Promise<void>(resolve => { release = resolve; });
+    const originalRead = ChunkFiles.prototype.read;
+    const read = vi.spyOn(ChunkFiles.prototype, 'read').mockImplementation(async function (this: ChunkFiles, path) {
+      const chunks = await originalRead.call(this, path);
+      loaded();
+      await blocked;
+      return chunks;
+    });
+    try {
+      const loading = flowmock.services.corpus.getRecording(id);
+      await ready;
+      await flowmock.services.corpus.deleteRecordings([id]);
+      release();
+      expect((await loading)?.id ?? null).toBeNull();
+      expect(await flowmock.services.corpus.getRecording(id)).toBeNull();
+    } finally { release(); read.mockRestore(); }
+  });
   it('rolls back every row on a database failure and preserves the original file error', async () => {
     const ids = flowmock.services.corpus.list().items;
     const anthropic = ids.find(item => item.protocol === 'anthropic-messages')!.id;

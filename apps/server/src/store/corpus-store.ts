@@ -160,13 +160,24 @@ export class SqliteCorpus implements CorpusStore {
     if (cached) return cached;
     const row = this.db.prepare('SELECT * FROM recordings WHERE id = ?').get(id) as RecordingRow | undefined;
     if (!row) return null;
+    const version = this.version;
     const meta = JSON.parse(row.response_meta) as ResponseMeta;
+    let chunks;
+    try {
+      chunks = await this.chunks.read(row.chunk_file);
+    } catch (error) {
+      if (!this.db.prepare('SELECT id FROM recordings WHERE id = ?').get(id)) return null;
+      throw error;
+    }
+    // A deletion can commit during the file read. Its pending loader must
+    // not bring the deleted recording back into the replay cache.
+    if (version !== this.version && !this.db.prepare('SELECT id FROM recordings WHERE id = ?').get(id)) return null;
     const recording: Recording = {
       ...summaryFromRow(row),
       request: JSON.parse(row.request) as RecordedRequest,
-      response: { ...meta, chunks: await this.chunks.read(row.chunk_file) },
+      response: { ...meta, chunks },
     };
-    this.loaded.set(id, recording);
+    if (version === this.version) this.loaded.set(id, recording);
     return recording;
   }
 
