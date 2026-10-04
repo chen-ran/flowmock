@@ -35,6 +35,7 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/ui/__tests__/render.tsx`, `packages/ui/__tests__/{winui,lib}/**` | `apps/web/__tests__/render.tsx`, `apps/web/__tests__/{winui,lib}/**` | `motion_test.tsx` keeps only the presence suite; the navigation indicator suite moves with the app shell. |
 | `packages/ui/src/vite/typescript-stylesheets.ts` | `apps/web/vite.config.ts` (`typescriptStylesheets`) | Takes the virtual sheet table as an argument; module paths are absolute. |
 | `packages/ui/src/vite/legacy-css.ts` | `apps/web/vite.config.ts`, `apps/web/postcss.config.ts` | The CSS build target and the legacy-colour PostCSS plugin as exports. |
+| `packages/ui/src/vite/prism-components.ts` | `apps/web/vite.config.ts` (`prismComponentsEsm`, `optimizeDeps.exclude`) | The plugin and the component list as exports. |
 | `packages/ui/src/uno/preset.ts` | `apps/web/uno.config.ts` | A preset over `presetWind3` without content globs; exports the package's own globs for an app to scan. |
 | `packages/ui/src/global.css` | `apps/web/src/global.css` | `floway` identifiers renamed `flowmock`; comments point at FlowMock paths. |
 | `packages/ui/src/assets/fonts/*` | `apps/web/src/assets/fonts/*` | Unchanged; see Meslo LG below. |

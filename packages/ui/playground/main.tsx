@@ -1,4 +1,4 @@
-import { ServerRegular } from '@fluentui/react-icons';
+import { DeleteRegular, ServerRegular } from '@fluentui/react-icons';
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -6,14 +6,21 @@ import criticalCss from 'virtual:flowmock-critical.css?inline';
 import winuiStylesheet from 'virtual:flowmock-winui.css?url';
 
 import { BackNavigationButton } from '../src/controls/back-navigation-button.tsx';
+import { Chip } from '../src/controls/chip.tsx';
+import { CodeBlock } from '../src/controls/code-block.tsx';
 import { DashboardPageHeader } from '../src/controls/dashboard-page-header.tsx';
 import { EmptyState } from '../src/controls/empty-state.tsx';
+import { HttpMethodBadge, HttpStatusBadge } from '../src/controls/http-badge.tsx';
 import { PANEL_STACK_CLASS } from '../src/controls/layout.ts';
 import { ContentLoadingScreen } from '../src/controls/loading-screen.tsx';
+import { OutcomeMessageBar } from '../src/controls/outcome-message-bar.tsx';
 import { Panel } from '../src/controls/panel.tsx';
 import { RouteLink } from '../src/controls/route-link.tsx';
 import { SectionHeader } from '../src/controls/section-header.tsx';
 import { SettingsCard, SettingsExpander, SettingsSwitch } from '../src/controls/settings-card.tsx';
+import { StatusBadge } from '../src/controls/status-badge.tsx';
+import { TooltipIconButton } from '../src/controls/tooltip-icon-button.tsx';
+import { useCopyToClipboard } from '../src/controls/use-copy-to-clipboard.ts';
 import { fluentComponents } from '../src/fluent.ts';
 import { initI18n } from '../src/i18n/init.ts';
 import { useSystemTheme } from '../src/theme.ts';
@@ -82,6 +89,7 @@ const Playground = () => {
   const toasterId = useId('toaster');
   const { dispatchToast } = useToastController(toasterId);
   const [switchOn, setSwitchOn] = useState(true);
+  const copy = useCopyToClipboard();
 
   return <main className="grid gap-8 p-[var(--flowmock-page-inset)]">
     <DashboardPageHeader actions={<Button appearance="primary">Action</Button>} description="Controls rendered through the WinUI layer." title="Playground" />
@@ -98,6 +106,22 @@ const Playground = () => {
         </SettingsExpander>
         <Panel><EmptyState description="Recordings appear here once the proxy captures one." title="No recordings" /></Panel>
         <Panel className="h-[160px]"><ContentLoadingScreen label="Loading…" /></Panel>
+      </div>
+    </Section>
+    <Section title="Data display">
+      <StatusBadge tone="success">completed</StatusBadge>
+      <StatusBadge tone="warning">truncated</StatusBadge>
+      <StatusBadge tone="danger">failed</StatusBadge>
+      <StatusBadge tone="accent">replay</StatusBadge>
+      <StatusBadge tone="neutral">idle</StatusBadge>
+      <HttpMethodBadge method="POST" />
+      <HttpStatusBadge severity="success">200</HttpStatusBadge>
+      <HttpStatusBadge severity="error">529</HttpStatusBadge>
+      <Chip>claude-sonnet-5-5</Chip>
+      <TooltipIconButton icon={<DeleteRegular />} label="Delete" danger onClick={() => {}} />
+      <div className="grid w-full gap-3">
+        <OutcomeMessageBar intent="error" title="Import failed" onDismiss={() => {}}>The file is not a FlowMock cassette.</OutcomeMessageBar>
+        <CodeBlock code={'{\n  "model": "claude-sonnet-5-5",\n  "stream": true\n}'} copyOutcome={copy.outcomeFor()} language="json" onCopy={() => copy.copy('{}')} />
       </div>
     </Section>
     <Section title="Buttons">

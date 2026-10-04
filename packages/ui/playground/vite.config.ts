@@ -2,7 +2,7 @@ import UnoCSS from '@unocss/postcss';
 import { defineConfig } from 'vite';
 
 import { presetFlowmock, UI_CONTENT_GLOBS } from '../src/uno/preset.ts';
-import { FLOWMOCK_STYLESHEETS, legacyCssBuild, legacyCssColors, typescriptStylesheets } from '../src/vite/index.ts';
+import { FLOWMOCK_STYLESHEETS, legacyCssBuild, legacyCssColors, PRISM_COMPONENTS, prismComponentsEsm, typescriptStylesheets } from '../src/vite/index.ts';
 
 // A development-only page that mounts the controls the way an app does: the
 // same stylesheet layers in the same order, the same utility pass and the same
@@ -30,5 +30,8 @@ export default defineConfig({
       ],
     },
   },
-  plugins: [typescriptStylesheets(FLOWMOCK_STYLESHEETS)],
+  optimizeDeps: {
+    exclude: [...PRISM_COMPONENTS],
+  },
+  plugins: [prismComponentsEsm(), typescriptStylesheets(FLOWMOCK_STYLESHEETS)],
 });
