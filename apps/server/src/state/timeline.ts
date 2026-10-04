@@ -24,6 +24,21 @@ export interface TimelineEntry {
   error: string | null;
 }
 
+export const summary = (entry: TimelineEntry) => ({
+  id: entry.id,
+  startedAt: entry.startedAt,
+  mode: entry.mode,
+  keyName: entry.keyName,
+  protocol: entry.protocol,
+  transport: entry.transport,
+  status: entry.status,
+  outcome: entry.outcome,
+  recordingId: entry.recordingId,
+  achievedTtftMs: entry.result?.achievedTtftMs ?? null,
+  achievedTps: entry.result?.achievedTps ?? null,
+  fault: entry.trace?.fault?.type ?? null,
+});
+
 // The most recent requests, newest first, for debugging a run.
 export class Timeline {
   private readonly entries: TimelineEntry[] = [];
@@ -52,6 +67,8 @@ export class Timeline {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
+
+  get listenerCount(): number { return this.listeners.size; }
 
   clear(): void {
     this.entries.length = 0;

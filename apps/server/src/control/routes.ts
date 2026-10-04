@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 
 import { adminAuth, type AdminEnv, authRoutes } from './auth.ts';
+import { liveStream, requestStream } from './live.ts';
 import { exportCorpus, importCorpus } from './portable.ts';
 import { matchEndpoint } from '../data-plane/endpoints.ts';
 import type { Services } from '../services.ts';
@@ -184,6 +185,8 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
 
 // ── Observability ──
 
+  .get('/live', c => liveStream(c, services))
+  .get('/requests/stream', c => requestStream(c, services))
   .get('/requests', c => {
     const limit = Math.min(1000, Number(c.req.query('limit') ?? 100));
     return c.json({ items: services.timeline.list(limit, { mode: c.req.query('mode'), keyName: c.req.query('key') }) });

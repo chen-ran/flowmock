@@ -3,6 +3,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { nodeClock } from './runtime/clock.ts';
 import { CassetteTracker } from './state/cassettes.ts';
 import { ConversationMemory } from './state/conversations.ts';
+import { fromEntry, LiveAggregator } from './state/live.ts';
 import { Metrics } from './state/metrics.ts';
 import { SessionState } from './state/sessions.ts';
 import { Timeline } from './state/timeline.ts';
@@ -25,6 +26,7 @@ export interface Services {
   // Bearer token for the control plane; null leaves it open (loopback only).
   adminKey: string | null;
   adminSessions: AdminSessions;
+  live: LiveAggregator;
 }
 
 export interface ServiceOptions {
@@ -39,13 +41,17 @@ export interface ServiceOptions {
 export const createServices = (options: ServiceOptions): Services => {
   const corpus = new SqliteCorpus(options.db, new ChunkFiles(options.chunkDir));
   const sessions = new SessionState();
+  const timeline = new Timeline(options.timelineSize);
+  const live = new LiveAggregator(() => sessions.active());
+  timeline.subscribe(entry => live.observe(fromEntry(entry)));
   return {
     db: options.db,
     corpus,
     config: new ConfigStore(options.db),
     sessions,
     conversations: new ConversationMemory(),
-    timeline: new Timeline(options.timelineSize),
+    timeline,
+    live,
     metrics: new Metrics(() => sessions.active()),
     cassettes: new CassetteTracker(corpus, options.cassetteIdleMs),
     clock: options.clock ?? nodeClock,
