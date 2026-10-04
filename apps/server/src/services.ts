@@ -3,6 +3,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { nodeClock } from './runtime/clock.ts';
 import { CassetteTracker } from './state/cassettes.ts';
 import { ConversationMemory } from './state/conversations.ts';
+import { InflightTracker } from './state/inflight.ts';
 import { fromEntry, LiveAggregator } from './state/live.ts';
 import { Metrics } from './state/metrics.ts';
 import { SessionState } from './state/sessions.ts';
@@ -29,6 +30,10 @@ export interface Services {
   adminSessions: AdminSessions;
   live: LiveAggregator;
   traces: TraceStore | null;
+  inflight: InflightTracker;
+  stopping: boolean;
+  shutdown: AbortController;
+  controlStreams: AbortController;
 }
 
 export interface ServiceOptions {
@@ -46,6 +51,7 @@ export const createServices = (options: ServiceOptions): Services => {
   const sessions = new SessionState();
   const traces = options.timeline?.persist ? new TraceStore(options.db, options.timeline) : null;
   const timeline = new Timeline(options.timelineSize, traces ?? undefined);
+  const inflight = new InflightTracker();
   const live = new LiveAggregator(() => sessions.active());
   timeline.subscribe(entry => live.observe(fromEntry(entry)));
   return {
@@ -57,6 +63,10 @@ export const createServices = (options: ServiceOptions): Services => {
     timeline,
     live,
     traces,
+    inflight,
+    stopping: false,
+    shutdown: new AbortController(),
+    controlStreams: new AbortController(),
     metrics: new Metrics(() => sessions.active()),
     cassettes: new CassetteTracker(corpus, options.cassetteIdleMs),
     clock: options.clock ?? nodeClock,

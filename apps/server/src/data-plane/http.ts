@@ -45,9 +45,11 @@ export const handleDataPlane = async (c: DataPlaneContext, services: Services, e
   } catch {
     return protocolErrorResponse(endpoint.protocol, 400, 'invalid_request_error', 'FlowMock: the request body must be JSON.');
   }
-  return binding.mode === 'record'
-    ? await recordHttp(c, services, endpoint, binding, url, raw, body)
-    : await replayHttp(c, services, endpoint, binding, url, body, origin);
+  if (binding.mode === 'replay') return await replayHttp(c, services, endpoint, binding, url, body, origin);
+  services.sessions.enter(binding.key);
+  try {
+    return await recordHttp(c, services, endpoint, binding, url, raw, body);
+  } finally { services.sessions.leave(binding.key); }
 };
 
 // ── Replay ──
@@ -283,7 +285,7 @@ const recordHttp = async (c: DataPlaneContext, services: Services, rawEndpoint: 
       });
       // A recording the client cut short is not what the upstream would have
       // sent; it stays in the corpus but out of default selection.
-      if (clientAborted && !complete) recording.features.outcome = 'client_aborted';
+      if (clientAborted && !complete) recording.features.outcome = services.shutdown.signal.aborted ? 'truncated' : 'client_aborted';
       await services.corpus.saveRecording(recording);
       recordingId = recording.id;
       outcome = recording.features.outcome;

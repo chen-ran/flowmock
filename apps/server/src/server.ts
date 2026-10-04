@@ -8,6 +8,7 @@ import { WebSocketServer } from 'ws';
 import { createApp } from './app.ts';
 import { createUpgradeHandler } from './data-plane/websocket.ts';
 import { createServices, type Services } from './services.ts';
+import { InflightTracker } from './state/inflight.ts';
 import { createNodeFetchHandler, nodeWebDistDir } from './static-web.ts';
 import { openDatabase } from './store/database.ts';
 import type { TimelineOptions } from './store/trace-store.ts';
@@ -33,7 +34,7 @@ export interface RunningServer {
   port: number;
   services: Services;
   server: Server;
-  close(): Promise<void>;
+  close(options?: { graceMs?: number }): Promise<void>;
 }
 
 const isLoopback = (host: string): boolean => host === '127.0.0.1' || host === '::1' || host === 'localhost';
@@ -53,8 +54,12 @@ export const startServer = async (options: StartOptions): Promise<RunningServer>
       console.error('[flowmock] unhandled request error', error);
     },
   });
+  const httpWork = new InflightTracker();
   const server = createServer((request, response) => {
-    void listener(request, response);
+    const work = listener(request, response);
+    const pathname = new URL(request.url ?? '/', 'http://flowmock.invalid').pathname;
+    if (request.method !== 'GET' || !['/api/live', '/api/requests/stream'].includes(pathname)) void httpWork.track(work);
+    void work.catch(error => console.error('[flowmock] request failed', error));
   });
   // Long reasoning streams can stay silent for minutes; Node's default
   // request timeout would cut them.
@@ -74,18 +79,36 @@ export const startServer = async (options: StartOptions): Promise<RunningServer>
   const url = `http://${host.includes(':') ? `[${host}]` : host}:${port}`;
   const maintenance = setInterval(() => { services.traces?.prune(); services.adminSessions.purgeExpired(); }, 10 * 60_000);
   maintenance.unref();
+  let closing: Promise<void> | undefined;
   return {
     url,
     port,
     services,
     server,
-    close: async () => {
+    close: ({ graceMs = 10_000 } = {}) => closing ??= (async () => {
+      const started = performance.now();
+      services.stopping = true;
       clearInterval(maintenance);
-      for (const client of wss.clients) client.terminate();
-      wss.close();
+      const serverClosed = new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+      services.controlStreams.abort();
+      const results = await Promise.all([services.inflight.drain(graceMs), httpWork.drain(graceMs)]);
+      if (results.some(result => !result.drained)) services.shutdown.abort(new Error('FlowMock shutdown grace period expired'));
+      const drained = results.every(result => result.drained);
+      for (const client of wss.clients) {
+        if (drained) client.close(1001, 'FlowMock shutdown');
+        else client.terminate();
+      }
+      // A close handshake lets the peer consume the terminal message. Bound
+      // it by the remaining grace period for unresponsive peers.
+      const websocketDeadline = setTimeout(() => { for (const client of wss.clients) client.terminate(); }, Math.max(0, graceMs - (performance.now() - started)));
+      const websocketsClosed = new Promise<void>(resolve => wss.close(() => resolve()));
       server.closeAllConnections();
-      await new Promise<void>(resolve => server.close(() => resolve()));
+      // Aborted recordings still write their partial exchange. Keep SQLite
+      // open until those handlers and WebSocket close callbacks have settled.
+      await Promise.all([serverClosed, websocketsClosed]);
+      clearTimeout(websocketDeadline);
+      await Promise.all([services.inflight.drain(Infinity), httpWork.drain(Infinity)]);
       db.close();
-    },
+    })(),
   };
 };

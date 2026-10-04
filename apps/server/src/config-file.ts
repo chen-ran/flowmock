@@ -27,6 +27,7 @@ const configFileSchema = z.object({
     maxEntries: z.number().int().positive().default(100_000),
   }).strict().default({ persist: false, retainDays: 7, maxEntries: 100_000 }),
   webDistDir: z.string().min(1).optional(),
+  shutdownGraceMs: z.number().int().nonnegative().default(10_000),
 }).strict();
 
 export type ConfigFile = z.infer<typeof configFileSchema>;
@@ -35,6 +36,7 @@ export const runtimeConfig = (config: ConfigFile | null, env: NodeJS.ProcessEnv 
   const persist = env.FLOWMOCK_TIMELINE_PERSIST;
   if (persist !== undefined && !['0', '1', 'false', 'true'].includes(persist)) throw new Error('FLOWMOCK_TIMELINE_PERSIST must be 0, 1, false or true');
   return {
+    shutdownGraceMs: configFileSchema.shape.shutdownGraceMs.parse(env.FLOWMOCK_SHUTDOWN_GRACE_MS === undefined ? config?.shutdownGraceMs : Number(env.FLOWMOCK_SHUTDOWN_GRACE_MS)),
     webDistDir: nodeWebDistDir({ FLOWMOCK_WEB_DIST_DIR: env.FLOWMOCK_WEB_DIST_DIR ?? config?.webDistDir }),
     timeline: configFileSchema.shape.timeline.parse({
       persist: persist === undefined ? config?.timeline.persist : persist === '1' || persist === 'true',

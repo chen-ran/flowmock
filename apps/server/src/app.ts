@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 
 import { adminAuth, type AdminEnv } from './control/auth.ts';
 import { controlRoutes } from './control/routes.ts';
-import { matchEndpoint } from './data-plane/endpoints.ts';
+import { matchEndpoint, protocolErrorResponse } from './data-plane/endpoints.ts';
 import { handleDataPlane } from './data-plane/http.ts';
 import { getGeminiModel, listGeminiModels, listModels } from './data-plane/models.ts';
 import type { Services } from './services.ts';
@@ -11,6 +11,15 @@ export const createApp = (services: Services) => {
   const app = new Hono<AdminEnv>();
 
   app.onError((error, c) => c.json({ error: { type: 'flowmock_internal_error', message: error.message, stack: error.stack } }, 500));
+
+  app.use('*', async (c, next) => {
+    if (services.stopping) {
+      const url = new URL(c.req.url);
+      const endpoint = matchEndpoint(url.pathname, url.search);
+      return endpoint ? protocolErrorResponse(endpoint.protocol, 503, 'api_error', 'FlowMock is shutting down.') : c.json({ error: { code: 'shutting_down', message: 'FlowMock is shutting down.' } }, 503);
+    }
+    await next();
+  });
 
   const control = controlRoutes(services);
   app.route('/api', control);
@@ -30,7 +39,7 @@ export const createApp = (services: Services) => {
       await next();
       return;
     }
-    return await handleDataPlane(c, services, endpoint);
+    return await services.inflight.track(handleDataPlane(c, services, endpoint));
   });
 
   app.notFound(c => c.json({ error: { type: 'not_found_error', message: `FlowMock does not serve ${c.req.method} ${new URL(c.req.url).pathname}.` } }, 404));

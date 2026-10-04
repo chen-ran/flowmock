@@ -38,8 +38,9 @@ const env = process.env;
 const configPath = values.config ?? env.FLOWMOCK_CONFIG;
 // A broken config fails before anything listens.
 const config = configPath === undefined ? null : loadConfigFile(resolve(configPath));
+const runtime = runtimeConfig(config, env);
 const running = await startServer({
-  ...runtimeConfig(config, env),
+  ...runtime,
   host: values.host ?? env.FLOWMOCK_HOST ?? '127.0.0.1',
   port: Number(values.port ?? env.FLOWMOCK_PORT ?? 8787),
   dataDir: resolve(values.data ?? env.FLOWMOCK_DATA_DIR ?? 'data'),
@@ -54,9 +55,12 @@ if (config !== null) {
 console.log(`[flowmock] ${FLOWMOCK_VERSION} listening on ${running.url}`);
 console.log(`[flowmock] data plane: ${running.url}/v1 (OpenAI, Anthropic), ${running.url}/v1beta (Gemini); admin API: ${running.url}/api`);
 
+let stopping = false;
 const shutdown = (signal: string) => {
+  if (stopping) process.exit(1);
+  stopping = true;
   console.log(`[flowmock] ${signal}, shutting down`);
-  running.close().then(() => process.exit(0), error => {
+  running.close({ graceMs: runtime.shutdownGraceMs }).then(() => process.exit(0), error => {
     console.error(error);
     process.exit(1);
   });

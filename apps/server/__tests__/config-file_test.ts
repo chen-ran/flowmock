@@ -29,6 +29,8 @@ describe('flowmock.yaml', () => {
     expect(runtimeConfig(config, { FLOWMOCK_TIMELINE_PERSIST: '0', FLOWMOCK_TIMELINE_RETAIN_DAYS: '3', FLOWMOCK_TIMELINE_MAX: '12' }).timeline).toEqual({ persist: false, retainDays: 3, maxEntries: 12 });
     expect(() => runtimeConfig(config, { FLOWMOCK_TIMELINE_MAX: 'NaN' })).toThrow();
     expect(() => runtimeConfig(config, { FLOWMOCK_TIMELINE_PERSIST: 'yes' })).toThrow();
+    expect(runtimeConfig(config, { FLOWMOCK_SHUTDOWN_GRACE_MS: '50' }).shutdownGraceMs).toBe(50);
+    expect(() => runtimeConfig(config, { FLOWMOCK_SHUTDOWN_GRACE_MS: '-1' })).toThrow();
   });
   it('expands environment variables and refuses unset ones', () => {
     expect(expandEnv('key: ${SECRET}', { SECRET: 'sk-1' })).toBe('key: sk-1');

@@ -37,7 +37,7 @@ const sendError = (socket: WebSocket, status: number, type: string, message: str
 
 const rejectUpgrade = (socket: Duplex, status: number, message: string): void => {
   const body = JSON.stringify({ error: { message, type: status === 401 ? 'authentication_error' : 'invalid_request_error' } });
-  socket.end(`HTTP/1.1 ${status} ${status === 401 ? 'Unauthorized' : status === 404 ? 'Not Found' : 'Bad Request'}\r\ncontent-type: application/json\r\ncontent-length: ${Buffer.byteLength(body)}\r\nconnection: close\r\n\r\n${body}`);
+  socket.end(`HTTP/1.1 ${status} ${status === 503 ? 'Service Unavailable' : status === 401 ? 'Unauthorized' : status === 404 ? 'Not Found' : 'Bad Request'}\r\ncontent-type: application/json\r\ncontent-length: ${Buffer.byteLength(body)}\r\nconnection: close\r\n\r\n${body}`);
 };
 
 const headersOf = (request: IncomingMessage): Headers => {
@@ -61,6 +61,7 @@ const parseMessage = (data: unknown): Record<string, unknown> | string => {
 };
 
 export const createUpgradeHandler = (services: Services, wss: WebSocketServer) => (request: IncomingMessage, socket: Duplex, head: Buffer): void => {
+  if (services.stopping) { rejectUpgrade(socket, 503, 'FlowMock is shutting down.'); return; }
   const url = new URL(request.url ?? '/', 'http://flowmock.invalid');
   if (!RESPONSES_WEBSOCKET_PATHS.has(url.pathname)) {
     rejectUpgrade(socket, 404, `FlowMock serves WebSocket only on ${[...RESPONSES_WEBSOCKET_PATHS].join(' and ')}.`);
@@ -94,14 +95,15 @@ const replayConnection = (services: Services, ws: WebSocket, binding: KeyBinding
   let queue = Promise.resolve();
 
   ws.on('message', data => {
+    if (services.stopping) return sendError(ws, 503, 'server_error', 'FlowMock is shutting down.');
     const origin = services.clock.now();
-    queue = queue.then(async () => {
+    queue = services.inflight.track(queue.then(async () => {
       if (connection.signal.aborted) return;
       const message = parseMessage(data);
       if (typeof message === 'string') return sendError(ws, 400, 'invalid_request_error', message);
       if (message.type !== 'response.create') return sendError(ws, 400, 'invalid_request_error', `Unsupported WebSocket event type '${message.type as string}'.`);
       await replayTurn(services, ws, binding, overrides, url, responsesCreatePayload(message), origin, connection.signal);
-    }).catch(error => {
+    })).catch(error => {
       sendError(ws, 500, 'server_error', `FlowMock: ${error instanceof Error ? error.stack ?? error.message : String(error)}`);
     });
   });
@@ -174,6 +176,7 @@ interface OpenTurn {
   prepared: ReturnType<typeof prepareRequest>;
   slot: { cassetteId: string; seq: number };
   chunks: RecordedChunk[];
+  finish: () => void;
 }
 
 const TERMINAL_TYPES = new Set(['response.completed', 'response.incomplete', 'response.failed', 'error']);
@@ -186,41 +189,44 @@ const recordConnection = (services: Services, client: WebSocket, binding: KeyBin
   let turn: OpenTurn | null = null;
   const encoder = new TextEncoder();
 
-  const finalize = async (complete: boolean, outcomeOverride?: string): Promise<void> => {
+  const finalize = (complete: boolean, outcomeOverride?: string): Promise<void> => services.inflight.track((async () => {
     const current = turn;
     if (!current) return;
     turn = null;
-    const endedAt = services.clock.now() - current.dispatchedAt;
-    const response = {
-      status: 200,
-      headers: [] as Array<[string, string]>,
-      headersAt: 0,
-      wire: 'ws' as const,
-      chunks: current.chunks,
-      complete,
-      endedAt,
-    };
-    const recording = buildRecording({
-      id: newId('rec'),
-      createdAt: current.startedAt,
-      transport: 'ws',
-      request: { method: 'WS', path: redactPath(url.pathname), headers: redactHeaders([...headers.entries()]), body: current.message },
-      response,
-      prepared: current.prepared,
-      cassetteId: current.slot.cassetteId,
-      cassetteSeq: current.slot.seq,
-    });
-    if (outcomeOverride) recording.features.outcome = outcomeOverride;
-    await services.corpus.saveRecording(recording);
-    rememberConversation(services, current.prepared, response);
-    services.metrics.recordings.inc({ protocol: 'openai-responses', outcome: recording.features.outcome });
-    services.metrics.requests.inc({ protocol: 'openai-responses', mode: 'record', outcome: recording.features.outcome });
-    services.timeline.add({
-      id: current.requestId, startedAt: current.startedAt, mode: 'record', keyName: binding.name, protocol: 'openai-responses', transport: 'ws', method: 'WS', path: redactPath(url.pathname),
-      model: current.prepared.normalized.model, status: 200, durationMs: endedAt, recordingId: recording.id, cassetteId: current.slot.cassetteId,
-      trace: null, result: null, expected: null, outcome: recording.features.outcome, error: null,
-    });
-  };
+    try {
+      const endedAt = services.clock.now() - current.dispatchedAt;
+      const response = {
+        status: 200,
+        headers: [] as Array<[string, string]>,
+        headersAt: 0,
+        wire: 'ws' as const,
+        chunks: current.chunks,
+        complete,
+        endedAt,
+      };
+      const recording = buildRecording({
+        id: newId('rec'),
+        createdAt: current.startedAt,
+        transport: 'ws',
+        request: { method: 'WS', path: redactPath(url.pathname), headers: redactHeaders([...headers.entries()]), body: current.message },
+        response,
+        prepared: current.prepared,
+        cassetteId: current.slot.cassetteId,
+        cassetteSeq: current.slot.seq,
+      });
+      if (!complete && services.shutdown.signal.aborted) recording.features.outcome = 'truncated';
+      else if (outcomeOverride) recording.features.outcome = outcomeOverride;
+      await services.corpus.saveRecording(recording);
+      rememberConversation(services, current.prepared, response);
+      services.metrics.recordings.inc({ protocol: 'openai-responses', outcome: recording.features.outcome });
+      services.metrics.requests.inc({ protocol: 'openai-responses', mode: 'record', outcome: recording.features.outcome });
+      services.timeline.add({
+        id: current.requestId, startedAt: current.startedAt, mode: 'record', keyName: binding.name, protocol: 'openai-responses', transport: 'ws', method: 'WS', path: redactPath(url.pathname),
+        model: current.prepared.normalized.model, status: 200, durationMs: endedAt, recordingId: recording.id, cassetteId: current.slot.cassetteId,
+        trace: null, result: null, expected: null, outcome: recording.features.outcome, error: null,
+      });
+    } finally { services.sessions.leave(binding.key); current.finish(); }
+  })());
   const report = (error: unknown) => console.error('[flowmock] recording WebSocket turn failed', error);
 
   const forwardToUpstream = (data: string | Buffer) => {
@@ -229,6 +235,7 @@ const recordConnection = (services: Services, client: WebSocket, binding: KeyBin
   };
 
   client.on('message', (data, isBinary) => {
+    if (services.stopping) return sendError(client, 503, 'server_error', 'FlowMock is shutting down.');
     const text = isBinary ? null : data.toString();
     if (text !== null) {
       const message = parseMessage(text);
@@ -250,7 +257,11 @@ const recordConnection = (services: Services, client: WebSocket, binding: KeyBin
           history: services.conversations.get(typeof payload.previous_response_id === 'string' ? payload.previous_response_id : null),
           session: overrides.session,
         });
+        let finish!: () => void;
+        void services.inflight.track(new Promise<void>(resolve => { finish = resolve; }));
+        services.sessions.enter(binding.key);
         turn = {
+          finish,
           requestId: newId('req'),
           startedAt: Date.now(),
           dispatchedAt: services.clock.now(),
@@ -276,15 +287,15 @@ const recordConnection = (services: Services, client: WebSocket, binding: KeyBin
   let relay = Promise.resolve();
   upstream.on('message', (data, isBinary) => {
     const arrivedAt = services.clock.now();
-    relay = relay.then(async () => {
+    relay = services.inflight.track(relay.then(async () => {
       if (turn && !isBinary) {
         const text = data.toString();
         turn.chunks.push({ t: arrivedAt - turn.dispatchedAt, bytes: encoder.encode(text) });
         const message = parseMessage(text);
         if (typeof message !== 'string' && TERMINAL_TYPES.has(message.type as string)) await finalize(true);
       }
-      if (client.readyState === WebSocket.OPEN) client.send(data, { binary: isBinary });
-    }).catch(report);
+      if (client.readyState === WebSocket.OPEN) await new Promise<void>((resolve, reject) => client.send(data, { binary: isBinary }, error => error ? reject(error) : resolve()));
+    })).catch(report);
   });
 
   upstream.on('close', (code, reason) => {
