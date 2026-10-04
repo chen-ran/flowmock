@@ -1,7 +1,7 @@
 // Ported from Floway apps/platform-node/src/static-web.ts (MIT). See NOTICE.md.
 import { createReadStream } from 'node:fs';
 import { realpath, stat } from 'node:fs/promises';
-import { basename, extname, isAbsolute, relative, resolve } from 'node:path';
+import { basename, extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
@@ -67,7 +67,7 @@ const responseFromFile = async (path: string, root: string, request: Request, im
   try {
     const [realRoot, realFile] = await Promise.all([realpath(root), realpath(path)]);
     const relativeFile = relative(realRoot, realFile);
-    if (relativeFile === '..' || relativeFile.startsWith('../') || isAbsolute(relativeFile)) return new Response('Not found', { status: 404 });
+    if (relativeFile === '..' || relativeFile.startsWith(`..${sep}`) || isAbsolute(relativeFile)) return new Response('Not found', { status: 404 });
     const info = await stat(realFile);
     if (!info.isFile()) return null;
     const etag = etagFor(info.size, info.mtimeMs);
@@ -80,7 +80,7 @@ const responseFromFile = async (path: string, root: string, request: Request, im
     });
     if (isNotModified(request.headers, etag, info.mtimeMs)) return new Response(null, { status: 304, headers });
     if (request.method === 'HEAD') return new Response(null, { headers });
-    return new Response(Readable.toWeb(createReadStream(path)) as ReadableStream<Uint8Array>, { headers });
+    return new Response(Readable.toWeb(createReadStream(realFile)) as ReadableStream<Uint8Array>, { headers });
   } catch (error) {
     if (['ENOENT', 'ENOTDIR'].includes((error as NodeJS.ErrnoException).code ?? '')) return null;
     throw error;
@@ -112,7 +112,7 @@ export const createNodeFetchHandler = (serverFetch: FetchHandler, options: Stati
     const root = resolve(options.distDir);
     const requestedPath = resolve(root, `.${pathname}`);
     const relativePath = relative(root, requestedPath);
-    if (relativePath === '..' || relativePath.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`) || isAbsolute(relativePath)) {
+    if (relativePath === '..' || relativePath.startsWith(`..${sep}`) || isAbsolute(relativePath)) {
       return new Response('Not found', { status: 404 });
     }
 
