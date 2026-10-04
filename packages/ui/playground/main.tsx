@@ -1,9 +1,21 @@
+import { ServerRegular } from '@fluentui/react-icons';
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { createMemoryRouter, RouterProvider } from 'react-router';
 import criticalCss from 'virtual:flowmock-critical.css?inline';
 import winuiStylesheet from 'virtual:flowmock-winui.css?url';
 
+import { BackNavigationButton } from '../src/controls/back-navigation-button.tsx';
+import { DashboardPageHeader } from '../src/controls/dashboard-page-header.tsx';
+import { EmptyState } from '../src/controls/empty-state.tsx';
+import { PANEL_STACK_CLASS } from '../src/controls/layout.ts';
+import { ContentLoadingScreen } from '../src/controls/loading-screen.tsx';
+import { Panel } from '../src/controls/panel.tsx';
+import { RouteLink } from '../src/controls/route-link.tsx';
+import { SectionHeader } from '../src/controls/section-header.tsx';
+import { SettingsCard, SettingsExpander, SettingsSwitch } from '../src/controls/settings-card.tsx';
 import { fluentComponents } from '../src/fluent.ts';
+import { initI18n } from '../src/i18n/init.ts';
 import { useSystemTheme } from '../src/theme.ts';
 import '../src/global.css';
 
@@ -72,6 +84,22 @@ const Playground = () => {
   const [switchOn, setSwitchOn] = useState(true);
 
   return <main className="grid gap-8 p-[var(--flowmock-page-inset)]">
+    <DashboardPageHeader actions={<Button appearance="primary">Action</Button>} description="Controls rendered through the WinUI layer." title="Playground" />
+    <Section title="Shell">
+      <div className="grid w-full gap-3">
+        <div><BackNavigationButton to="/recordings">Recordings</BackNavigationButton></div>
+        <Panel className={PANEL_STACK_CLASS}>
+          <SectionHeader description="A panel stacks a heading over its body." level={2} title="Panel" />
+          <Text>Body text with a <RouteLink to="/scenarios">route link</RouteLink>.</Text>
+        </Panel>
+        <SettingsCard description="A setting the system remembered." header="Record upstream traffic" icon={<ServerRegular />} action={<SettingsSwitch checked={switchOn} label="Record" onChange={setSwitchOn} />} />
+        <SettingsExpander description="Opens to its own region." header="Timeline persistence" toggledOn={switchOn} action={<SettingsSwitch checked={switchOn} label="Persist" onChange={setSwitchOn} />}>
+          <Text>Retained for seven days.</Text>
+        </SettingsExpander>
+        <Panel><EmptyState description="Recordings appear here once the proxy captures one." title="No recordings" /></Panel>
+        <Panel className="h-[160px]"><ContentLoadingScreen label="Loading…" /></Panel>
+      </div>
+    </Section>
     <Section title="Buttons">
       <Button appearance="primary">Primary</Button>
       <Button>Secondary</Button>
@@ -156,4 +184,12 @@ const App = () => <FluentProvider theme={useSystemTheme()}>
   <div className="fixed inset-0 overflow-auto bg-fui-bg1"><Playground /></div>
 </FluentProvider>;
 
-createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);
+// The playground has no catalogue of its own; the controls bring theirs.
+await initI18n({
+  loadLocale: async () => await Promise.resolve({ translation: {} }),
+  shell: { translation: {} },
+});
+
+const router = createMemoryRouter([{ path: '*', element: <App /> }]);
+
+createRoot(document.getElementById('root')!).render(<StrictMode><RouterProvider router={router} /></StrictMode>);

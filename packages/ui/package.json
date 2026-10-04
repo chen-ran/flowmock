@@ -4,15 +4,39 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    "./critical.css": { "import": "./src/critical.css.ts", "types": "./src/critical.css.ts" },
-    "./fluent": { "import": "./src/fluent.ts", "types": "./src/fluent.ts" },
+    "./critical.css": {
+      "import": "./src/critical.css.ts",
+      "types": "./src/critical.css.ts"
+    },
+    "./fluent": {
+      "import": "./src/fluent.ts",
+      "types": "./src/fluent.ts"
+    },
     "./global.css": "./src/global.css",
-    "./i18n": { "import": "./src/i18n/index.ts", "types": "./src/i18n/index.ts" },
-    "./theme": { "import": "./src/theme.ts", "types": "./src/theme.ts" },
-    "./uno": { "import": "./src/uno/preset.ts", "types": "./src/uno/preset.ts" },
-    "./vite": { "import": "./src/vite/index.ts", "types": "./src/vite/index.ts" },
-    "./winui": { "import": "./src/winui/index.ts", "types": "./src/winui/index.ts" },
-    "./winui/*": { "import": "./src/winui/*.ts", "types": "./src/winui/*.ts" }
+    "./i18n": {
+      "import": "./src/i18n/index.ts",
+      "types": "./src/i18n/index.ts"
+    },
+    "./theme": {
+      "import": "./src/theme.ts",
+      "types": "./src/theme.ts"
+    },
+    "./uno": {
+      "import": "./src/uno/preset.ts",
+      "types": "./src/uno/preset.ts"
+    },
+    "./vite": {
+      "import": "./src/vite/index.ts",
+      "types": "./src/vite/index.ts"
+    },
+    "./winui": {
+      "import": "./src/winui/index.ts",
+      "types": "./src/winui/index.ts"
+    },
+    "./winui/*": {
+      "import": "./src/winui/*.ts",
+      "types": "./src/winui/*.ts"
+    }
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
@@ -23,9 +47,11 @@
     "@fluentui/react-toast": "^9.8.1",
     "culori": "^4.0.2",
     "i18next": "^26.3.6",
+    "overlayscrollbars": "2.13.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "react-i18next": "^17.0.11"
+    "react-i18next": "^17.0.11",
+    "react-router": "8.3.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.2",

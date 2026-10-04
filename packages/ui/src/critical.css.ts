@@ -1,4 +1,6 @@
 // Ported from Floway apps/web/src/critical.css.ts (MIT). See NOTICE.md.
+import { errorShellCss } from './controls/error-shell.css.ts';
+import { loadingCss } from './controls/loading-screen.css.ts';
 import { baseFontStack } from './font-stacks.ts';
 
 // Fluent scopes its tokens to the FluentProvider element, so <body>, the
@@ -24,4 +26,6 @@ body { font-family: var(--fontFamilyBase); }
 
 export const criticalCss = [
   documentCss,
+  loadingCss,
+  errorShellCss,
 ].join('\n');

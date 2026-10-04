@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { ESLint } from 'eslint';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 const root = fileURLToPath(new URL('../../..', import.meta.url));
 
@@ -50,6 +50,12 @@ const fluentType = "import type { ButtonProps } from '@fluentui/react-components
 const fluentNamespace = "import * as fluentNamespace from '@fluentui/react-components';\nexport const n = fluentNamespace;\n";
 const toastValue = "import { useToastController } from '@fluentui/react-toast';\nexport const x = useToastController;\n";
 const i18nValue = "import { useTranslation } from 'react-i18next';\nexport const x = useTranslation;\n";
+
+// The first lint builds the typed program for the whole package, which takes
+// seconds; it is paid here rather than out of the first test's budget.
+beforeAll(async () => {
+  await lint(probes.control, fluentType);
+}, 60_000);
 
 describe('Fluent value-import boundary', () => {
   it('rejects a value import outside fluent.ts', async () => {
