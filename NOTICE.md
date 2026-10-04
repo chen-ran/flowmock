@@ -24,6 +24,7 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/protocols/src/gemini-generate-content/*` | `packages/protocols/src/gemini-generate-content/*` | Adds the SSE and JSON-array stream parsers and the JSON-array encoder; finish reasons are open-string. |
 | `packages/core/src/protocols/*` (output-frame detection) | `packages/gateway/src/data-plane/chat/shared/first-output-token.ts` | The classification is reused to measure TTFT and attribute output tokens. |
 | `apps/server/src/store/database.ts` (`applyMigrations`) | `apps/platform-node/src/migrate.ts` | Synchronous `node:sqlite` version. |
+| `apps/server/src/static-web.ts` | `apps/platform-node/src/static-web.ts` | FlowMock-owned paths, environment setting and build diagnostic; rejects raw dot-segment traversal and symlink escapes. |
 | `eslint.config.ts` | `eslint.config.ts` | Trimmed to FlowMock's packages; adds the runtime-independence rules for `packages/*`. |
 
 Design references without copied code: the recording format of

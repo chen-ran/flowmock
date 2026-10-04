@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 import { importCorpus } from './control/portable.ts';
 import type { Services } from './services.ts';
+import { nodeWebDistDir } from './static-web.ts';
 import { keyInputSchema, targetInputSchema } from './store/config-store.ts';
 
 // `flowmock.yaml`: targets, key bindings and scenarios applied at startup.
@@ -25,6 +26,7 @@ const configFileSchema = z.object({
     retainDays: z.number().positive().default(7),
     maxEntries: z.number().int().positive().default(100_000),
   }).strict().default({ persist: false, retainDays: 7, maxEntries: 100_000 }),
+  webDistDir: z.string().min(1).optional(),
 }).strict();
 
 export type ConfigFile = z.infer<typeof configFileSchema>;
@@ -33,6 +35,7 @@ export const runtimeConfig = (config: ConfigFile | null, env: NodeJS.ProcessEnv 
   const persist = env.FLOWMOCK_TIMELINE_PERSIST;
   if (persist !== undefined && !['0', '1', 'false', 'true'].includes(persist)) throw new Error('FLOWMOCK_TIMELINE_PERSIST must be 0, 1, false or true');
   return {
+    webDistDir: nodeWebDistDir({ FLOWMOCK_WEB_DIST_DIR: env.FLOWMOCK_WEB_DIST_DIR ?? config?.webDistDir }),
     timeline: configFileSchema.shape.timeline.parse({
       persist: persist === undefined ? config?.timeline.persist : persist === '1' || persist === 'true',
       retainDays: env.FLOWMOCK_TIMELINE_RETAIN_DAYS === undefined ? config?.timeline.retainDays : Number(env.FLOWMOCK_TIMELINE_RETAIN_DAYS),

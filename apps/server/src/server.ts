@@ -8,6 +8,7 @@ import { WebSocketServer } from 'ws';
 import { createApp } from './app.ts';
 import { createUpgradeHandler } from './data-plane/websocket.ts';
 import { createServices, type Services } from './services.ts';
+import { createNodeFetchHandler, nodeWebDistDir } from './static-web.ts';
 import { openDatabase } from './store/database.ts';
 import type { TimelineOptions } from './store/trace-store.ts';
 import type { Clock } from '@flowmock/core';
@@ -24,6 +25,7 @@ export interface StartOptions {
   cassetteIdleMs?: number;
   timelineSize?: number;
   timeline?: TimelineOptions;
+  webDistDir?: string;
 }
 
 export interface RunningServer {
@@ -46,7 +48,7 @@ export const startServer = async (options: StartOptions): Promise<RunningServer>
   services.traces?.prune();
   const { app } = createApp(services);
 
-  const listener = getRequestListener(app.fetch, {
+  const listener = getRequestListener(createNodeFetchHandler(app.fetch, { distDir: options.webDistDir ?? nodeWebDistDir() }), {
     errorHandler: error => {
       console.error('[flowmock] unhandled request error', error);
     },
