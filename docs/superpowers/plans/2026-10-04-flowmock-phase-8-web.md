@@ -59,7 +59,9 @@
 - Create: `apps/web/src/routes/{dashboard.tsx,settings.tsx}`
 - Test: `apps/web/__tests__/components/sidebar_test.tsx`、`apps/web/__tests__/routes/settings_test.tsx`
 
-导航结构：概览 `/`、语料 `/corpus`、Cassette `/cassettes`、场景 `/scenarios`、Key 与目标 `/keys`、实时监控 `/monitor`、请求时间线 `/requests`、设置 `/settings`。设置页：语言（en / 简体中文，存偏好）、主题（跟随系统 / 亮 / 暗——**待决定**：WinUI 的 `--winui-*` 词典按 `prefers-color-scheme` 切换，Floway 因此不提供覆盖；要提供亮/暗选项，需先让 `packages/ui/src/winui/tokens.ts` 与关键 CSS 支持按根元素属性切换并重做并排比较，否则去掉该项）、服务端版本（`/api/health`）、时间线持久化状态、退出登录。
+配色跟随系统，不提供亮/暗覆盖（与 Floway 一致：WinUI 的 `--winui-*` 词典按 `prefers-color-scheme` 切换）；亮暗两种主题的浏览器验证通过切换系统或浏览器外观完成。
+
+导航结构：概览 `/`、语料 `/corpus`、Cassette `/cassettes`、场景 `/scenarios`、Key 与目标 `/keys`、实时监控 `/monitor`、请求时间线 `/requests`、设置 `/settings`。设置页：语言（en / 简体中文，存偏好）、服务端版本（`/api/health`）、时间线持久化状态、退出登录。
 
 - [ ] **Step 1: 写测试（导航高亮当前页；切换语言后文案变化且偏好持久化；退出登录清除 session）。**
 - [ ] **Step 2: 确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): add the shell, navigation and settings"`
