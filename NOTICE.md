@@ -53,6 +53,7 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/ui/src/lib/hue.ts` | `apps/web/src/lib/hue.ts` | `oklchToHex` only. |
 | `patches/@fluentui__react-charts@9.3.22.patch` | `patches/@fluentui__react-charts@9.3.22.patch` | Unchanged. |
 | `packages/ui/__tests__/charts/*` | `apps/web/__tests__/components/charts/*` | `time-axis_test.ts` adds frame, key, tick and label cases. |
+| `packages/ui/src/gallery/{gallery,layout}.tsx` | `apps/web/src/routes/dashboard-winui-gallery.tsx` | A named `Gallery` export without the colour-picker section, its copy about FlowMock, and the generic control sections of `control-sections.tsx` appended. |
 | `packages/ui/src/lib/page-navigation.ts` | `apps/web/src/lib/page-navigation.ts` | History-state mark renamed `flowmockPageChange`. |
 | `packages/ui/__tests__/controls/*` | `apps/web/__tests__/components/ui/*` (same names) | Paths only. |
 

@@ -8,6 +8,7 @@
     "./controls/*": { "import": "./src/controls/*", "types": "./src/controls/*" },
     "./critical.css": { "import": "./src/critical.css.ts", "types": "./src/critical.css.ts" },
     "./fluent": { "import": "./src/fluent.ts", "types": "./src/fluent.ts" },
+    "./gallery": { "import": "./src/gallery/gallery.tsx", "types": "./src/gallery/gallery.tsx" },
     "./global.css": "./src/global.css",
     "./i18n": { "import": "./src/i18n/index.ts", "types": "./src/i18n/index.ts" },
     "./theme": { "import": "./src/theme.ts", "types": "./src/theme.ts" },
