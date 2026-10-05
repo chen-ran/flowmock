@@ -14,6 +14,7 @@
 - 运行时只能导入浏览器安全的模块；对 `@flowmock/server` 只允许 `import type`（ESLint `no-restricted-syntax` 强制，规则写法同 Floway 的 `@floway-dev/gateway` 限制）。
 - 领域组件放在 `apps/web/src/components/<domain>/`，不得放进 `packages/ui`。
 - 每个页面任务都要：组件测试（假 API）→ 浏览器中真实打开验证（开发与生产构建各一次，亮暗主题，en 与 zh-Hans）→ `pnpm run verify` → 提交。
+- 阶段 7 的实际接口见其计划末尾的实施记录：控件、图表与 WinUI 内部模块经带扩展名的子路径导入（`@flowmock/ui/controls/panel.tsx`）；挂载 `useSystemTheme()` 返回的主题；文案边界用 `createTranslation<typeof en['translation']>()` 建立，`initI18n` 返回 `{ i18n, setLanguage }`；Monaco 编辑器只经 `@flowmock/ui/controls/lazy-editors.ts` 使用。
 - 时间一律以服务端返回的毫秒值为准，显示时按浏览器本地时区格式化；图表与时间轴的数值不得在前端重新计算 TTFT/TPS，直接使用服务端的 `expected` 与 `result`。
 
 ---
@@ -21,7 +22,7 @@
 ### Task 1: 应用脚手架
 
 **Files:**
-- Create: `apps/web/package.json`、`tsconfig.json`、`vite.config.ts`（使用 `@flowmock/ui/vite` 的 `typescriptStylesheets(FLOWMOCK_STYLESHEETS)`；开发代理 `/api`、`/metrics`、`/v1`、`/v1beta` 到 `FLOWMOCK_DEV_SERVER`，默认 `http://127.0.0.1:8787`）、`react-router.config.ts`、`uno.config.ts`（`presets: [presetWind3(), presetFlowmock()]`）、`postcss.config.ts`、`vitest.config.ts`
+- Create: `apps/web/package.json`、`tsconfig.json`、`vite.config.ts`（使用 `@flowmock/ui/vite` 的 `typescriptStylesheets(FLOWMOCK_STYLESHEETS)`；开发代理 `/api`、`/metrics`、`/v1`、`/v1beta` 到 `FLOWMOCK_DEV_SERVER`，默认 `http://127.0.0.1:8787`）、`react-router.config.ts`、`uno.config.ts`（`presets: [presetFlowmock()]`——预设已包含 `presetWind3`；`content.filesystem` 同时列出本应用源码与 `UI_CONTENT_GLOBS`）、`postcss.config.ts`（UnoCSS 与 `legacyCssColors`）、`vitest.config.ts`
 - Create: `apps/web/src/{root.tsx,routes.ts,entry.client.tsx,global.css}`、`apps/web/src/i18n/{index.ts,locales/en.ts,locales/zh-Hans.ts,translation.ts}`
 - Modify: `eslint.config.ts`（加入 `apps/web/tsconfig.json`，`@flowmock/server` 只能类型导入）
 - Modify: 根 `package.json`（`build:web`、`dev:web`；`verify` 追加 `build:web`）
@@ -58,7 +59,7 @@
 - Create: `apps/web/src/routes/{dashboard.tsx,settings.tsx}`
 - Test: `apps/web/__tests__/components/sidebar_test.tsx`、`apps/web/__tests__/routes/settings_test.tsx`
 
-导航结构：概览 `/`、语料 `/corpus`、Cassette `/cassettes`、场景 `/scenarios`、Key 与目标 `/keys`、实时监控 `/monitor`、请求时间线 `/requests`、设置 `/settings`。设置页：语言（en / 简体中文，存偏好）、主题（跟随系统 / 亮 / 暗）、服务端版本（`/api/health`）、时间线持久化状态、退出登录。
+导航结构：概览 `/`、语料 `/corpus`、Cassette `/cassettes`、场景 `/scenarios`、Key 与目标 `/keys`、实时监控 `/monitor`、请求时间线 `/requests`、设置 `/settings`。设置页：语言（en / 简体中文，存偏好）、主题（跟随系统 / 亮 / 暗——**待决定**：WinUI 的 `--winui-*` 词典按 `prefers-color-scheme` 切换，Floway 因此不提供覆盖；要提供亮/暗选项，需先让 `packages/ui/src/winui/tokens.ts` 与关键 CSS 支持按根元素属性切换并重做并排比较，否则去掉该项）、服务端版本（`/api/health`）、时间线持久化状态、退出登录。
 
 - [ ] **Step 1: 写测试（导航高亮当前页；切换语言后文案变化且偏好持久化；退出登录清除 session）。**
 - [ ] **Step 2: 确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): add the shell, navigation and settings"`
@@ -137,7 +138,7 @@
 - Create: `apps/web/src/routes/monitor.tsx`、`apps/web/src/components/monitor/{use-live.ts,ttft-chart.tsx,tps-chart.tsx,throughput-chart.tsx,fault-chart.tsx,summary-cards.tsx}`
 - Test: `apps/web/__tests__/components/monitor/use-live_test.ts`
 
-`use-live.ts` 订阅 `/api/live`（`EventSource`，`?session=`），在内存中保留最近 10 分钟的快照用于画图，断线后指数退避重连并在页面上提示；页面在不可见时暂停订阅（复用 `use-poll-while-visible` 的可见性逻辑）。图表：TTFT p50/p90/p99、TPS p50/p90/p99、RPS 与活跃请求数、按类型堆叠的故障计数，全部使用 `@flowmock/ui/charts`。
+`use-live.ts` 订阅 `/api/live`（`EventSource`，`?session=`），在内存中保留最近 10 分钟的快照用于画图，断线后指数退避重连并在页面上提示；页面在不可见时暂停订阅（复用 `use-poll-while-visible` 的可见性逻辑）。图表：TTFT p50/p90/p99、TPS p50/p90/p99、RPS 与活跃请求数、按类型堆叠的故障计数，全部使用 `@flowmock/ui/charts/*`。
 
 - [ ] **Step 1: 写测试（用假 `EventSource` 推送快照，断言缓冲窗口裁剪、重连退避、隐藏时关闭连接）。**
 - [ ] **Step 2: 确认 RED，实现，浏览器验证（对 `fm-demo-weak-network` 循环发请求时曲线变化），提交**：`git commit -am "feat(web): monitor live TTFT, TPS and faults"`

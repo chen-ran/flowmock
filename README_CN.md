@@ -269,6 +269,7 @@ pnpm run verify   # lint、类型检查和全部测试
 | `packages/protocols` | 四种协议的线格式类型、SSE 与 JSON 数组解码器、流解析器和 collect reducer。 |
 | `packages/core` | 与运行时无关的引擎：语料分析、请求规范化与指纹、录制选取、变换、回放计划与执行器。 |
 | `packages/test-fixtures` | 各测试套件共享的真实录制样本。 |
+| `packages/ui` | 浏览器端 UI 基础：重塑为 WinUI 3 风格的 Fluent UI、通用控件、懒加载的编辑器、图表、类型化 i18n 边界，以及管理 Web 应用使用的构建辅助。 |
 | `apps/server` | Node 服务端：数据面、录制代理、WebSocket Responses、SQLite 存储、管理 API。 |
 | `examples` | 示例配置、场景和演示语料。 |
 
@@ -280,7 +281,7 @@ pnpm run verify   # lint、类型检查和全部测试
 
 1. 控制面：浏览器会话、通过 SSE 推送的实时指标、可持久化的时间线、托管 Web 应用的静态资源、优雅停机。
 2. 保真度与变换：按协议合成错误、由非流式录制合成流式响应、按 token 截断、文本与工具名改写、模板响应、`previous_response_not_found`、RPM/TPM 限流。
-3. UI 包与管理 Web 应用。
+3. UI 包（已完成）：管理 Web 应用所需的 WinUI 层、控件、编辑器、图表与类型化 i18n；接下来是管理 Web 应用本身。
 4. 跨协议回放、多核压测与 Docker 镜像。
 
 ## 许可证

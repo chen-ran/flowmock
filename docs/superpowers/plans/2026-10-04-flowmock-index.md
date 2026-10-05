@@ -8,9 +8,9 @@
 
 **Tech Stack:** Node 22.19+/24、TypeScript 5.9、pnpm 10、Hono 4 + `@hono/node-server`、`ws`、`undici`、`node:sqlite`、zod 4、yaml、Vitest 4；前端阶段增加 React 19、React Router 8（SPA）、Fluent UI v9、`@fluentui/react-charts`、i18next、Monaco + monaco-yaml、UnoCSS、Vite 8。
 
-## 当前状态（2026-10-04，阶段 6 完成）
+## 当前状态（2026-10-05，阶段 7 完成）
 
-最初设计计划（九个阶段，计划文件本身不纳入仓库，阶段划分见下表）的 1–6 阶段已经完成。`pnpm run verify`（lint、typecheck、235 个测试）在本地 Node 24.14.1 全部通过。
+最初设计计划（九个阶段，计划文件本身不纳入仓库，阶段划分见下表）的 1–7 阶段已经完成。`pnpm run verify`（lint、typecheck、370 个测试）在本地 Node 24.14.1 全部通过。
 
 | 原阶段 | 状态 | 交付内容 |
 |---|---|---|
@@ -20,7 +20,7 @@
 | 4 服务端回放 | 完成 | 五种数据面入口（含 Responses WS 多轮与 `previous_response_id` 记忆）、逐字节调度、FIN/abort/RST/hang、`node:sqlite` 迁移与 `.fmc` 块文件、`/v1/models` 与 Gemini models、真实 socket 集成测试（官方 Anthropic/OpenAI/GenAI SDK） |
 | 5 录制代理 | 完成 | HTTP 与 WS 转发、逐块计时、鉴权头脱敏、gzip/br 解码、cassette 自动归档、录制先落盘再结束响应 |
 | 6 控制面 | 完成 | Bearer 与持久化管理 session；语料/cassette/场景/key/目标 CRUD；语料搜索/分页/批量删除/统计；场景预览；时间线可选落库；两路实时 SSE；静态托管；HTTP/WS 优雅停机；类型化客户端契约；原有 metrics/schema/导入导出/配置 |
-| 7 UI 包 | 未开始 | 见阶段 7 计划 |
+| 7 UI 包 | 完成 | `packages/ui`：WinUI 重塑层与唯一 Fluent 入口（ESLint 强制）、主题与全局样式、样式表虚拟模块插件与 UnoCSS 预设、类型化 i18n 工厂与 `ui` 文案、通用控件、懒加载的正文与 YAML 编辑器、图表与补丁、开发画廊；与 Floway 画廊逐像素一致；Fluent 家族固定在验证过的版本 |
 | 8 管理平台 | 未开始 | 见阶段 8 计划 |
 | 9 可选 | 未开始 | 见阶段 9 计划 |
 

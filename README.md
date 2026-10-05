@@ -391,6 +391,7 @@ pnpm run verify   # lint, typecheck and every test
 | `packages/protocols` | Wire types, SSE and JSON-array decoders, stream parsers and collect reducers for the four protocols. |
 | `packages/core` | The runtime-independent engine: corpus analysis, normalization and fingerprints, selection, transforms, replay plans and the runner. |
 | `packages/test-fixtures` | Realistic recorded exchanges shared by every test suite. |
+| `packages/ui` | The browser UI foundation: Fluent UI restyled as WinUI 3, generic controls, lazily loaded editors, charts, the typed i18n boundary and the build helpers the web app uses. |
 | `apps/server` | The Node server: data plane, recording proxy, WebSocket Responses, SQLite storage, admin API. |
 | `examples` | Example configuration, scenarios and the demo corpus. |
 
@@ -409,7 +410,8 @@ The follow-up work is planned in [`docs/superpowers/plans`](docs/superpowers/pla
    from non-streaming recordings, token truncation, text and tool-name
    rewriting, templated responses, `previous_response_not_found`, RPM/TPM
    limits.
-3. A UI package and the management web app.
+3. UI package completed: the WinUI layer, controls, editors, charts and typed
+   i18n the management web app is built from. The web app itself is next.
 4. Cross-protocol replay, multi-core load generation and a Docker image.
 
 ## License

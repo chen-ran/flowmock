@@ -1,6 +1,6 @@
 # FlowMock 阶段 7：UI 包 `packages/ui` Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 新建 `packages/ui`，按管理平台页面的需要逐步移植 Floway 的 Fluent UI v9 → WinUI 3 重塑层、通用控件、charts、类型化 i18n 边界与构建辅助，并从第一天起用 ESLint 强制“Fluent 值导入只能经过 `packages/ui/src/fluent.ts`”。
 
@@ -36,7 +36,7 @@
   - `@fluentui/react-toast` 只允许出现在 `packages/ui/src/winui/toaster.tsx`。
   - `react-i18next` 只允许出现在 `packages/ui/src/i18n/translation.tsx` 与 `packages/ui/src/i18n/init.ts`。
 
-- [ ] **Step 1: 写边界测试**
+- [x] **Step 1: 写边界测试**
 
 ```ts
 // packages/ui/__tests__/eslint-boundaries_test.ts
@@ -69,10 +69,10 @@ describe('Fluent value-import boundary', () => {
 });
 ```
 
-- [ ] **Step 2: 确认 RED**：`pnpm --filter @flowmock/ui exec vitest run __tests__/eslint-boundaries_test.ts`（包不存在或规则不存在而失败）。
-- [ ] **Step 3: 创建包与规则**。`package.json` 依赖版本与 Floway `apps/web/package.json` 对齐（React ^19.2、Fluent `react-components` ^9.74、`react-icons` ^2.0.334、`react-toast` ^9.8、`react-charts` 9.3.22 精确版本以匹配补丁、i18next ^26、react-i18next ^17）。`tsconfig.json`：`jsx: react-jsx`、`lib: [ES2024, DOM, DOM.Iterable]`、`types: []`。Vitest：`environment: 'happy-dom'`、`setupFiles: ['__tests__/setup.ts']`。
-- [ ] **Step 4: 验证 GREEN 并跑全量**：`pnpm run verify`。
-- [ ] **Step 5: 提交**：`git commit -am "chore(ui): scaffold the UI package and its Fluent import boundary"`
+- [x] **Step 2: 确认 RED**：`pnpm --filter @flowmock/ui exec vitest run __tests__/eslint-boundaries_test.ts`（包不存在或规则不存在而失败）。
+- [x] **Step 3: 创建包与规则**。`package.json` 依赖版本与 Floway `apps/web/package.json` 对齐（React ^19.2、Fluent `react-components` ^9.74、`react-icons` ^2.0.334、`react-toast` ^9.8、`react-charts` 9.3.22 精确版本以匹配补丁、i18next ^26、react-i18next ^17）。`tsconfig.json`：`jsx: react-jsx`、`lib: [ES2024, DOM, DOM.Iterable]`、`types: []`。Vitest：`environment: 'happy-dom'`、`setupFiles: ['__tests__/setup.ts']`。
+- [x] **Step 4: 验证 GREEN 并跑全量**：`pnpm run verify`。
+- [x] **Step 5: 提交**：`git commit -am "chore(ui): scaffold the UI package and its Fluent import boundary"`
 
 ---
 
@@ -89,11 +89,11 @@ describe('Fluent value-import boundary', () => {
 - `@flowmock/ui/theme`：`flowmockLightTheme`、`flowmockDarkTheme`、`useSystemTheme()`。
 - `@flowmock/ui/winui`：`winuiCss: string`、`criticalCss: string`、运动常量。
 
-- [ ] **Step 1: 先移植测试**，把 `floway` 字样替换为 `flowmock`，运行确认 RED（模块不存在）。
-- [ ] **Step 2: 移植源码**：`winui/index.ts` 只拼接已移植的控件样式；`page-transition.css.ts` 的动画名改为 `flowmock-page-leave`；保留全部 `microsoft-ui-xaml` 引用注释。
-- [ ] **Step 3: 验证 GREEN**：`pnpm --filter @flowmock/ui exec vitest run __tests__/winui`。
-- [ ] **Step 4: 浏览器验证**：在 Task 3 的开发 playground 中渲染 Button、Dialog、Table、Toast、Switch，亮暗两种主题各截图核对与 Floway 仪表盘一致（同一控件并排对比）。
-- [ ] **Step 5: 提交**：`git commit -am "feat(ui): port the WinUI restyling layer and the Fluent entry point"`
+- [x] **Step 1: 先移植测试**，把 `floway` 字样替换为 `flowmock`，运行确认 RED（模块不存在）。
+- [x] **Step 2: 移植源码**：`winui/index.ts` 只拼接已移植的控件样式；`page-transition.css.ts` 的动画名改为 `flowmock-page-leave`；保留全部 `microsoft-ui-xaml` 引用注释。
+- [x] **Step 3: 验证 GREEN**：`pnpm --filter @flowmock/ui exec vitest run __tests__/winui`。
+- [x] **Step 4: 浏览器验证**：在 Task 3 的开发 playground 中渲染 Button、Dialog、Table、Toast、Switch，亮暗两种主题各截图核对与 Floway 仪表盘一致（同一控件并排对比）。
+- [x] **Step 5: 提交**：`git commit -am "feat(ui): port the WinUI restyling layer and the Fluent entry point"`
 
 ---
 
@@ -115,10 +115,10 @@ export const FLOWMOCK_STYLESHEETS: { 'virtual:flowmock-critical.css': {...}; 'vi
 export const presetFlowmock: () => Preset;
 ```
 
-- [ ] **Step 1: 移植测试并确认 RED。**
-- [ ] **Step 2: 抽取实现**；`?url` 在开发服务器下走 `/@flowmock/stylesheet/` 中间件的逻辑原样保留。
-- [ ] **Step 3: playground 构建验证**：`pnpm --filter @flowmock/ui exec vite build playground` 成功，产物中 WinUI 样式表是带哈希的独立 CSS 资源。
-- [ ] **Step 4: 验证并提交**：`git commit -am "feat(ui): extract the stylesheet plugin and the UnoCSS preset"`
+- [x] **Step 1: 移植测试并确认 RED。**
+- [x] **Step 2: 抽取实现**；`?url` 在开发服务器下走 `/@flowmock/stylesheet/` 中间件的逻辑原样保留。
+- [x] **Step 3: playground 构建验证**：`pnpm --filter @flowmock/ui exec vite build playground` 成功，产物中 WinUI 样式表是带哈希的独立 CSS 资源。
+- [x] **Step 4: 验证并提交**：`git commit -am "feat(ui): extract the stylesheet plugin and the UnoCSS preset"`
 
 ---
 
@@ -142,10 +142,10 @@ export type TranslationKey<Locale> = /* 与 Floway translation.tsx 相同的推�
 export const initI18n: (options: { loadLocale: (language: SupportedLanguage) => Promise<object>; shell: object }) => Promise<I18n>;
 ```
 
-- [ ] **Step 1: 移植 `translation_typecheck.tsx`**，改为用一个测试用 locale 实例化工厂，断言错误的键与缺少的插值参数产生类型错误（`// @ts-expect-error`），确认 RED。
-- [ ] **Step 2: 泛化实现**：把 Floway 中 `typeof import('./locales/en').default['translation']` 的硬编码换成泛型参数；`alwaysFormat` 与数字格式表原样保留。
-- [ ] **Step 3: 平价测试**：`assertLocaleParity` 检查两个 locale 键集合、复数形式与插值占位符完全一致。
-- [ ] **Step 4: 验证并提交**：`git commit -am "feat(ui): add the typed translation boundary factory"`
+- [x] **Step 1: 移植 `translation_typecheck.tsx`**，改为用一个测试用 locale 实例化工厂，断言错误的键与缺少的插值参数产生类型错误（`// @ts-expect-error`），确认 RED。
+- [x] **Step 2: 泛化实现**：把 Floway 中 `typeof import('./locales/en').default['translation']` 的硬编码换成泛型参数；`alwaysFormat` 与数字格式表原样保留。
+- [x] **Step 3: 平价测试**：`assertLocaleParity` 检查两个 locale 键集合、复数形式与插值占位符完全一致。
+- [x] **Step 4: 验证并提交**：`git commit -am "feat(ui): add the typed translation boundary factory"`
 
 ---
 
@@ -171,10 +171,10 @@ export const initI18n: (options: { loadLocale: (language: SupportedLanguage) => 
 - Create: `patches/@fluentui__react-charts@9.3.22.patch`（从 Floway 复制）并在 `pnpm-workspace.yaml` 的 `patchedDependencies` 登记，附 Floway 原注释说明四处修复
 - Test（移植）: `packages/ui/__tests__/charts/{palette_test.ts,series-selection_test.ts,time-axis_test.ts}`
 
-- [ ] **Step 1: 移植测试并确认 RED。**
-- [ ] **Step 2: 移植源码与补丁**；`pnpm install` 后确认补丁生效（`pnpm patch-commit` 不需要，直接引用补丁文件）。
-- [ ] **Step 3: playground 渲染一张两条序列的折线图与一张面积图，浏览器中确认首帧宽度不为 0、序列铺满画布（补丁修复的两个问题）。**
-- [ ] **Step 4: 验证并提交**：`git commit -am "feat(ui): port the chart host, palette and series helpers"`
+- [x] **Step 1: 移植测试并确认 RED。**
+- [x] **Step 2: 移植源码与补丁**；`pnpm install` 后确认补丁生效（`pnpm patch-commit` 不需要，直接引用补丁文件）。
+- [x] **Step 3: playground 渲染一张两条序列的折线图与一张面积图，浏览器中确认首帧宽度不为 0、序列铺满画布（补丁修复的两个问题）。**
+- [x] **Step 4: 验证并提交**：`git commit -am "feat(ui): port the chart host, palette and series helpers"`
 
 ---
 
@@ -186,14 +186,30 @@ export const initI18n: (options: { loadLocale: (language: SupportedLanguage) => 
 
 `apps/web` 在开发模式下以 `winui-gallery` 路由引用它（与 Floway `routes.ts` 的 `MODE === 'development'` 门控方式相同），生产构建不包含。
 
-- [ ] **Step 1: 写测试**：`render(<Gallery />)` 不抛错且包含每个已移植控件的 `data-gallery-item`。
-- [ ] **Step 2: 实现并在浏览器中核对，提交**：`git commit -am "feat(ui): add a development-only control gallery"`
+- [x] **Step 1: 写测试**：`render(<Gallery />)` 不抛错且包含每个已移植控件的 `data-gallery-item`。
+- [x] **Step 2: 实现并在浏览器中核对，提交**：`git commit -am "feat(ui): add a development-only control gallery"`
 
 ---
 
 ## 阶段验收
 
-- [ ] `pnpm run verify` 通过（含 `packages/ui` 的 lint、typecheck 与测试）。
-- [ ] playground 生产构建成功；在浏览器中亮暗主题下核对 Task 2、5、6 涉及的全部控件。
-- [ ] `NOTICE.md` 移植表覆盖本阶段移植的每个文件。
-- [ ] ESLint 边界测试通过：任何 `apps/web` 或 `packages/ui/src/controls` 中的 Fluent 值导入都会失败。
+- [x] `pnpm run verify` 通过（含 `packages/ui` 的 lint、typecheck 与测试）。
+- [x] playground 生产构建成功；在浏览器中亮暗主题下核对 Task 2、5、6 涉及的全部控件。
+- [x] `NOTICE.md` 移植表覆盖本阶段移植的每个文件。
+- [x] ESLint 边界测试通过：任何 `apps/web` 或 `packages/ui/src/controls` 中的 Fluent 值导入都会失败。
+
+## 实施记录（2026-10-05）
+
+- 各任务分别提交在 `claude/phase-7-ui-package`；Floway 参考修订为 `c7e4d782763b010e44ba243588f2c83c90c97335`。根 `pnpm run verify` 在本地 Node 24.14.1 通过：67 个测试文件、370 个测试。
+- **与 Floway 并排核对**：在 `/tmp` 下另行克隆参考修订并运行其 `winui-gallery`（Playwright 注入 session 并桩住 `/auth/me`），与本包画廊的 23 个 WinUI 区块在同一区块宽度、同一背景下逐像素比较，亮暗两种主题均为 0 差异，仅剩把文案中的 Floway 改为 FlowMock 处；对话框、菜单、弹出层打开后的浮层同样一致。通用控件与图表在开发与生产构建的画廊中逐批打开核对。
+- **版本**：比较首先暴露出 Fluent 补丁版本漂移（9.74.9 会把 Field 的 size 传给其中的 Input），因此 `pnpm-workspace.yaml` 用 overrides 把 Fluent、Griffel、Tabster、Floating UI 与 React 固定在 Floway 锁文件的版本上；升级时整体移动并重跑并排比较。happy-dom 固定为 20.11.1（之后的版本取消动画时不把 `finished` promise 标记为已处理，与规范不符），dompurify 沿用 Floway 的 3.4.12 覆盖。
+- **范围调整**：
+  - 移植了 accordion 与 drawer 的样式表：nav 样式依赖 drawer 的描边，外观与动效包装层已经改写 Accordion，缺少样式表会得到半套 WinUI 控件；color-picker 仍推迟。
+  - `@flowmock/ui/theme` 导出可挂载的 `winuiLightTheme`、`winuiDarkTheme` 与 `useSystemTheme()`；计划中的 `flowmockLightTheme`/`flowmockDarkTheme` 是 WinUI 之前的基底，留在内部 `base-theme.ts`。
+  - 另外导出 `./critical.css`、`./global.css`（字体、页面与面板内距、等宽字号阶梯，连同 Meslo 字体及其 Apache-2.0 许可）、`./i18n`、`./gallery`，以及带扩展名的子路径 `./winui/*`、`./controls/*`、`./charts/*`（如 `@flowmock/ui/controls/panel.tsx`）。`./vite` 另含 `prismComponentsEsm`、`PRISM_COMPONENTS`、`legacyCssBuild`、`legacyCssColors`；`./uno` 的 `presetFlowmock()` 已包含 `presetWind3`，并导出 `UI_CONTENT_GLOBS` 供应用扫描本包的类名。
+  - i18n：`createTranslation<AppTranslation>()` 把应用英文文案与本包 `ui` 命名空间合并后做类型推导；`initI18n({ loadLocale, shell, instance? })` 返回 `{ i18n, setLanguage }`，并把 `ui` 文案合并进每个语言包。控件自带文案取自 Floway 的 `common.*` 与 `dashboard.charts.series.*`。
+  - 编辑器：除移植的只读 `body-editor` 外，由 Floway 的模型 YAML 编辑器泛化出 `yaml-editor`（可传 JSON Schema，经 monaco-yaml 校验、补全与悬停说明）；两者只经 `controls/lazy-editors.ts` 的 `LazyBodyEditor`、`LazyYamlEditor` 懒加载，测试断言导入时不求值 Monaco，生产构建中 Monaco 只出现在懒加载 chunk。
+  - 图表：`dashboard-time.ts` 改名 `time-axis.ts`，保留三种范围的本地分桶、刻度与标签，去掉仪表盘的 API 查询构造；补丁按精确版本登记，与 Floway 的补丁哈希一致，实测首帧宽度不为 0、序列铺满首尾刻度。
+  - 画廊按 Floway 的做法跟随系统配色、没有亮暗切换：`--winui-*` 词典由 `prefers-color-scheme` 切换，页面内的开关无法改变它们。画廊测试从源码树推导应挂载的模块与 WinUI 控件族，任何未在画廊中渲染的移植模块都会失败。
+  - overlayscrollbars 未移植 Floway 的补丁：它新增的 `measureOverflow` 在 Floway 当前代码中没有调用方；版本固定为 2.13.0 以匹配滚动条样式。
+- **已知遗留（不属于本阶段）**：`apps/server/__tests__/faults_test.ts` 的“resets the connection mid-stream”偶发失败——RST 可能让操作系统丢弃客户端尚未读取的字节，断言客户端读到 `content_block_delta` 本身存在竞态；根 `vitest.config.ts` 的 `test.env.TZ` 不会传到各包的 project 配置，包内测试按本机时区运行。
