@@ -4,48 +4,28 @@
   "version": "0.0.0",
   "type": "module",
   "exports": {
-    "./critical.css": {
-      "import": "./src/critical.css.ts",
-      "types": "./src/critical.css.ts"
-    },
-    "./fluent": {
-      "import": "./src/fluent.ts",
-      "types": "./src/fluent.ts"
-    },
+    "./charts/*": { "import": "./src/charts/*", "types": "./src/charts/*" },
+    "./controls/*": { "import": "./src/controls/*", "types": "./src/controls/*" },
+    "./critical.css": { "import": "./src/critical.css.ts", "types": "./src/critical.css.ts" },
+    "./fluent": { "import": "./src/fluent.ts", "types": "./src/fluent.ts" },
     "./global.css": "./src/global.css",
-    "./i18n": {
-      "import": "./src/i18n/index.ts",
-      "types": "./src/i18n/index.ts"
-    },
-    "./theme": {
-      "import": "./src/theme.ts",
-      "types": "./src/theme.ts"
-    },
-    "./uno": {
-      "import": "./src/uno/preset.ts",
-      "types": "./src/uno/preset.ts"
-    },
-    "./vite": {
-      "import": "./src/vite/index.ts",
-      "types": "./src/vite/index.ts"
-    },
-    "./winui": {
-      "import": "./src/winui/index.ts",
-      "types": "./src/winui/index.ts"
-    },
-    "./winui/*": {
-      "import": "./src/winui/*.ts",
-      "types": "./src/winui/*.ts"
-    }
+    "./i18n": { "import": "./src/i18n/index.ts", "types": "./src/i18n/index.ts" },
+    "./theme": { "import": "./src/theme.ts", "types": "./src/theme.ts" },
+    "./uno": { "import": "./src/uno/preset.ts", "types": "./src/uno/preset.ts" },
+    "./vite": { "import": "./src/vite/index.ts", "types": "./src/vite/index.ts" },
+    "./winui": { "import": "./src/winui/index.ts", "types": "./src/winui/index.ts" },
+    "./winui/*": { "import": "./src/winui/*", "types": "./src/winui/*" }
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fluentui/react-charts": "9.3.22",
     "@fluentui/react-components": "^9.74.4",
     "@fluentui/react-icons": "^2.0.334",
     "@fluentui/react-toast": "^9.8.1",
     "culori": "^4.0.2",
+    "d3-shape": "^3.2.0",
     "i18next": "^26.3.6",
     "monaco-editor": "0.54.0",
     "monaco-yaml": "^5.5.1",
@@ -59,6 +39,7 @@
   "devDependencies": {
     "@testing-library/react": "^16.3.2",
     "@types/culori": "^4.0.1",
+    "@types/d3-shape": "^3.2.0",
     "@types/node": "^22.20.5",
     "@types/prismjs": "^1.26.6",
     "@types/react": "^19.2.17",

@@ -49,6 +49,10 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/ui/__tests__/i18n/*` | `apps/web/__tests__/i18n/*` | Rewritten against the factory, the `ui` locales and an isolated instance. |
 | `packages/ui/src/controls/*` | `apps/web/src/components/ui/*` (same names) | `floway` identifiers renamed `flowmock`; strings read from the `ui` namespace; comments point at FlowMock paths. |
 | `packages/ui/src/controls/{yaml-editor.tsx,yaml.worker.ts}` | `apps/web/src/components/upstream-editor/{models-yaml-editor.tsx,models-yaml.worker.ts}` | A generic YAML editor with an optional JSON Schema, an accessible name and the body viewer's type metrics. |
+| `packages/ui/src/charts/*` | `apps/web/src/components/charts/*` (same names) | Strings read from `ui.chartSeries`; `time-axis.ts` is `dashboard-time.ts` without the dashboard's API query and with neutral names. |
+| `packages/ui/src/lib/hue.ts` | `apps/web/src/lib/hue.ts` | `oklchToHex` only. |
+| `patches/@fluentui__react-charts@9.3.22.patch` | `patches/@fluentui__react-charts@9.3.22.patch` | Unchanged. |
+| `packages/ui/__tests__/charts/*` | `apps/web/__tests__/components/charts/*` | `time-axis_test.ts` adds frame, key, tick and label cases. |
 | `packages/ui/src/lib/page-navigation.ts` | `apps/web/src/lib/page-navigation.ts` | History-state mark renamed `flowmockPageChange`. |
 | `packages/ui/__tests__/controls/*` | `apps/web/__tests__/components/ui/*` (same names) | Paths only. |
 

@@ -1,0 +1,158 @@
+diff --git a/lib/components/AreaChart/AreaChart.js b/lib/components/AreaChart/AreaChart.js
+index 1000ec66f9f2447b572ced78f9b106da400a6edc..6cdc4a36c694f159ea6b109a62ba465b6931b7af 100644
+--- a/lib/components/AreaChart/AreaChart.js
++++ b/lib/components/AreaChart/AreaChart.js
+@@ -910,8 +910,8 @@ export const AreaChart = /*#__PURE__*/ React.forwardRef((props, forwardedRef)=>{
+                 const rectHeight = props.containerHeight - _margins.top;
+                 return /*#__PURE__*/ React.createElement(React.Fragment, null, /*#__PURE__*/ React.createElement("g", null, /*#__PURE__*/ React.createElement("rect", {
+                     id: _rectId,
+-                    width: width1,
+-                    height: rectHeight,
++                    width: Math.max(0, width1),
++                    height: Math.max(0, rectHeight),
+                     fill: 'transparent',
+                     onMouseMove: (event)=>_onRectMouseMove(event),
+                     onMouseOut: _onRectMouseOut,
+diff --git a/lib/components/CommonComponents/CartesianChart.js b/lib/components/CommonComponents/CartesianChart.js
+index 1ac969766a34f8da2957812edd55b935d9de8985..fe60b9e60cf2214c59d290ada5a4f5bd331bfd9a 100644
+--- a/lib/components/CommonComponents/CartesianChart.js
++++ b/lib/components/CommonComponents/CartesianChart.js
+@@ -56,7 +56,7 @@ const DEFAULT_MARGIN_NO_TICKS = 20;
+         axis: 'horizontal'
+     });
+     // ComponentdidMount and Componentwillunmount logic
+-    React.useEffect(()=>{
++    React.useLayoutEffect(()=>{
+         _fitParentContainer();
+         if (props.showYAxisLables) {
+             const maxYAxisLabelLength = calculateMaxYAxisLabelLength(classes.yAxis);
+diff --git a/lib/components/LineChart/LineChart.js b/lib/components/LineChart/LineChart.js
+index 3eb0732414a7275dd80bfb99600e29fe7e5fd591..f0801a6d245336633257db6e46415ff510b6d0c5 100644
+--- a/lib/components/LineChart/LineChart.js
++++ b/lib/components/LineChart/LineChart.js
+@@ -441,7 +441,9 @@ const PATH_MULTIPLY_SIZE = 2.5;
+                     const text = _points[i].data[0].text;
+                     const targetElement = document.getElementById(circleId);
+                     var _points_i_data__text;
+-                    pointsForLine.push(/*#__PURE__*/ React.createElement(React.Fragment, null, /*#__PURE__*/ React.createElement(React.Fragment, {
++                    pointsForLine.push(/*#__PURE__*/ React.createElement(React.Fragment, {
++                        key: `${circleId}_single`
++                    }, /*#__PURE__*/ React.createElement(React.Fragment, {
+                         key: `${circleId}_fragment`
+                     }, /*#__PURE__*/ React.createElement("circle", {
+                         id: circleId,
+@@ -636,7 +638,9 @@ const PATH_MULTIPLY_SIZE = 2.5;
+                         const path = _getPath(xPoint1, yPoint1, circleId, j, false, _points[i].index);
+                         const targetElement = document.getElementById(circleId);
+                         var _points_i_data__text1;
+-                        pointsForLine.push(((_points_i_lineOptions15 = _points[i].lineOptions) === null || _points_i_lineOptions15 === void 0 ? void 0 : (_points_i_lineOptions_mode3 = _points_i_lineOptions15.mode) === null || _points_i_lineOptions_mode3 === void 0 ? void 0 : _points_i_lineOptions_mode3.includes('markers')) || supportsTextMode ? /*#__PURE__*/ React.createElement(React.Fragment, null, /*#__PURE__*/ React.createElement("circle", {
++                        pointsForLine.push(((_points_i_lineOptions15 = _points[i].lineOptions) === null || _points_i_lineOptions15 === void 0 ? void 0 : (_points_i_lineOptions_mode3 = _points_i_lineOptions15.mode) === null || _points_i_lineOptions_mode3 === void 0 ? void 0 : _points_i_lineOptions_mode3.includes('markers')) || supportsTextMode ? /*#__PURE__*/ React.createElement(React.Fragment, {
++                            key: `${circleId}_marker`
++                        }, /*#__PURE__*/ React.createElement("circle", {
+                             id: circleId,
+                             key: circleId,
+                             r: calculateMarkerRadius({
+diff --git a/lib/utilities/utilities.js b/lib/utilities/utilities.js
+index 0b5acb8f82a4655b3d6d59eafe123567738cb08d..a43c04ad7bde922589d25c0fc98d6b4119c66f4f 100644
+--- a/lib/utilities/utilities.js
++++ b/lib/utilities/utilities.js
+@@ -323,7 +323,10 @@ export function getDateFormatLevel(date, useUTC) {
+     ]).range([
+         domainNRangeValues.rStartValue,
+         domainNRangeValues.rEndValue
+-    ]).nice();
++    ]);
++    if (!tickParams.tickValues) {
++        xAxisScale.nice();
++    }
+     let tickCount = xAxisCount !== null && xAxisCount !== void 0 ? xAxisCount : 6;
+     let lowestFormatLevel = 100;
+     let highestFormatLevel = -1;
+@@ -1115,7 +1118,7 @@ export const wrapContent = (content, id, maxWidth)=>{
+             ...tickValues,
+             lDate
+         ]);
+-        if (hasMarkersMode || chartType === 7) {
++        if ((hasMarkersMode || chartType === 7) && tickValues.length === 0) {
+             const xPadding = getDomainPaddingForMarkers(sDate.getTime(), lDate.getTime());
+             sDate = new Date(sDate.getTime() - xPadding.start);
+             lDate = new Date(lDate.getTime() + xPadding.end);
+diff --git a/lib-commonjs/components/AreaChart/AreaChart.js b/lib-commonjs/components/AreaChart/AreaChart.js
+index 5204125c8498f697d3673b3017ec7e6cbbbe960e..d44cf7a974d14d42e79528051f049fedee2e5ea8 100644
+--- a/lib-commonjs/components/AreaChart/AreaChart.js
++++ b/lib-commonjs/components/AreaChart/AreaChart.js
+@@ -916,8 +916,8 @@ const AreaChart = /*#__PURE__*/ _react.forwardRef((props, forwardedRef)=>{
+                 const rectHeight = props.containerHeight - _margins.top;
+                 return /*#__PURE__*/ _react.createElement(_react.Fragment, null, /*#__PURE__*/ _react.createElement("g", null, /*#__PURE__*/ _react.createElement("rect", {
+                     id: _rectId,
+-                    width: width1,
+-                    height: rectHeight,
++                    width: Math.max(0, width1),
++                    height: Math.max(0, rectHeight),
+                     fill: 'transparent',
+                     onMouseMove: (event)=>_onRectMouseMove(event),
+                     onMouseOut: _onRectMouseOut,
+diff --git a/lib-commonjs/components/CommonComponents/CartesianChart.js b/lib-commonjs/components/CommonComponents/CartesianChart.js
+index bcf76c184cfe345e19d58fb199b478c4005539b1..d6873b1f11fd056ed5e648f842ddd1c0ef688a69 100644
+--- a/lib-commonjs/components/CommonComponents/CartesianChart.js
++++ b/lib-commonjs/components/CommonComponents/CartesianChart.js
+@@ -64,7 +64,7 @@ const CartesianChart = /*#__PURE__*/ _react.forwardRef(({ hideTickOverlap = true
+         axis: 'horizontal'
+     });
+     // ComponentdidMount and Componentwillunmount logic
+-    _react.useEffect(()=>{
++    _react.useLayoutEffect(()=>{
+         _fitParentContainer();
+         if (props.showYAxisLables) {
+             const maxYAxisLabelLength = calculateMaxYAxisLabelLength(classes.yAxis);
+diff --git a/lib-commonjs/components/LineChart/LineChart.js b/lib-commonjs/components/LineChart/LineChart.js
+index 9aa30c4008883b4910888cfeb3c4b2d9858f8efd..fc40aaa95726cfe022afdc1410a0c55d85e463bf 100644
+--- a/lib-commonjs/components/LineChart/LineChart.js
++++ b/lib-commonjs/components/LineChart/LineChart.js
+@@ -446,7 +446,9 @@ const LineChart = /*#__PURE__*/ _react.forwardRef(({ isCalloutForStack = true, .
+                     const text = _points[i].data[0].text;
+                     const targetElement = document.getElementById(circleId);
+                     var _points_i_data__text;
+-                    pointsForLine.push(/*#__PURE__*/ _react.createElement(_react.Fragment, null, /*#__PURE__*/ _react.createElement(_react.Fragment, {
++                    pointsForLine.push(/*#__PURE__*/ _react.createElement(_react.Fragment, {
++                        key: `${circleId}_single`
++                    }, /*#__PURE__*/ _react.createElement(_react.Fragment, {
+                         key: `${circleId}_fragment`
+                     }, /*#__PURE__*/ _react.createElement("circle", {
+                         id: circleId,
+@@ -641,7 +643,9 @@ const LineChart = /*#__PURE__*/ _react.forwardRef(({ isCalloutForStack = true, .
+                         const path = _getPath(xPoint1, yPoint1, circleId, j, false, _points[i].index);
+                         const targetElement = document.getElementById(circleId);
+                         var _points_i_data__text1;
+-                        pointsForLine.push(((_points_i_lineOptions15 = _points[i].lineOptions) === null || _points_i_lineOptions15 === void 0 ? void 0 : (_points_i_lineOptions_mode3 = _points_i_lineOptions15.mode) === null || _points_i_lineOptions_mode3 === void 0 ? void 0 : _points_i_lineOptions_mode3.includes('markers')) || supportsTextMode ? /*#__PURE__*/ _react.createElement(_react.Fragment, null, /*#__PURE__*/ _react.createElement("circle", {
++                        pointsForLine.push(((_points_i_lineOptions15 = _points[i].lineOptions) === null || _points_i_lineOptions15 === void 0 ? void 0 : (_points_i_lineOptions_mode3 = _points_i_lineOptions15.mode) === null || _points_i_lineOptions_mode3 === void 0 ? void 0 : _points_i_lineOptions_mode3.includes('markers')) || supportsTextMode ? /*#__PURE__*/ _react.createElement(_react.Fragment, {
++                            key: `${circleId}_marker`
++                        }, /*#__PURE__*/ _react.createElement("circle", {
+                             id: circleId,
+                             key: circleId,
+                             r: (0, _index1.calculateMarkerRadius)({
+diff --git a/lib-commonjs/utilities/utilities.js b/lib-commonjs/utilities/utilities.js
+index 5c6ff58f9d48df22a503c82b4917824813927d8f..990b9a9f2944ddd0cf3654e631f13b79f55fda0e 100644
+--- a/lib-commonjs/utilities/utilities.js
++++ b/lib-commonjs/utilities/utilities.js
+@@ -567,7 +567,10 @@ function createDateXAxis(xAxisParams, tickParams, culture, options, timeFormatLo
+     ]).range([
+         domainNRangeValues.rStartValue,
+         domainNRangeValues.rEndValue
+-    ]).nice();
++    ]);
++    if (!tickParams.tickValues) {
++        xAxisScale.nice();
++    }
+     let tickCount = xAxisCount !== null && xAxisCount !== void 0 ? xAxisCount : 6;
+     let lowestFormatLevel = 100;
+     let highestFormatLevel = -1;
+@@ -1240,7 +1243,7 @@ function domainRangeOfDateForAreaLineScatterVerticalBarCharts(points, margins, w
+             ...tickValues,
+             lDate
+         ]);
+-        if (hasMarkersMode || chartType === 7) {
++        if ((hasMarkersMode || chartType === 7) && tickValues.length === 0) {
+             const xPadding = getDomainPaddingForMarkers(sDate.getTime(), lDate.getTime());
+             sDate = new Date(sDate.getTime() - xPadding.start);
+             lDate = new Date(lDate.getTime() + xPadding.end);

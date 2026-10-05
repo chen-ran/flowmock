@@ -1,3 +1,4 @@
+import { AreaChart, LineChart } from '@fluentui/react-charts';
 import { DeleteRegular, ServerRegular } from '@fluentui/react-icons';
 import { StrictMode, Suspense, useState } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -5,6 +6,12 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import criticalCss from 'virtual:flowmock-critical.css?inline';
 import winuiStylesheet from 'virtual:flowmock-winui.css?url';
 
+import { useChartFrame } from '../src/charts/frame-styles.ts';
+import { ChartHost } from '../src/charts/host.tsx';
+import { ChartSection } from '../src/charts/section.tsx';
+import { withUniqueSeriesLegends } from '../src/charts/series-legends.ts';
+import { areaSeries, lineSeries } from '../src/charts/series-plot.ts';
+import { bucketFrames, chartTickValues, formatAxisDate } from '../src/charts/time-axis.ts';
 import { BackNavigationButton } from '../src/controls/back-navigation-button.tsx';
 import { Chip } from '../src/controls/chip.tsx';
 import { ChoiceGroup } from '../src/controls/choice-group.tsx';
@@ -96,6 +103,32 @@ const scenarioSchema = {
   additionalProperties: false,
 };
 
+const chartBuckets = bucketFrames('today', Date.UTC(2026, 9, 5, 9, 30));
+const chartEntries = withUniqueSeriesLegends([
+  { id: 'ttft', label: 'TTFT p50', hue: 251 },
+  { id: 'ttft-p90', label: 'TTFT p90', hue: 144 },
+]);
+const wave = (offset: number, scale: number) => chartBuckets.map((bucket, index) => ({ x: bucket.date, y: Math.round(scale * (1.4 + Math.sin(index / 3 + offset))) }));
+
+const Charts = () => {
+  const [hidden, setHidden] = useState(new Set<string>());
+  const frame = useChartFrame();
+  const visible = chartEntries.filter(entry => !hidden.has(entry.id));
+  const ticks = chartTickValues(chartBuckets).map(bucket => bucket.date);
+  return <div className="grid w-full gap-6">
+    <ChartSection controlsLabel="Series" emptyText="No series" entries={chartEntries} hidden={hidden} onHiddenChange={setHidden} title="Line chart">
+      <ChartHost className="line-chart" emptyText="Nothing in range" hasData={visible.length > 0}>
+        {({ size }) => <LineChart customDateTimeFormatter={date => formatAxisDate(date, 'today', 'en-US')} data={{ lineChartData: visible.map((entry, index) => lineSeries(entry, wave(index, 200 + index * 120))) }} height={size.height} hideLegend styles={frame} tickValues={ticks} width={size.width} />}
+      </ChartHost>
+    </ChartSection>
+    <ChartSection controlsLabel="Series" emptyText="No series" entries={chartEntries.slice(0, 1)} hidden={hidden} onHiddenChange={setHidden} title="Area chart">
+      <ChartHost className="area-chart" emptyText="Nothing in range" hasData>
+        {({ size }) => <AreaChart customDateTimeFormatter={date => formatAxisDate(date, 'today', 'en-US')} data={{ lineChartData: [areaSeries(chartEntries[0]!, wave(1, 300))] }} height={size.height} hideLegend styles={frame} tickValues={ticks} width={size.width} />}
+      </ChartHost>
+    </ChartSection>
+  </div>;
+};
+
 const rows = [
   { name: 'anthropic-messages', recordings: 12, outcome: 'completed' },
   { name: 'openai-responses', recordings: 7, outcome: 'truncated' },
@@ -154,6 +187,7 @@ const Playground = () => {
       <Button onClick={() => setConfirming(true)}>Confirm dialog</Button>
       <ConfirmDialog actionLabel="Delete" message="The scenario and its history are removed." onConfirm={() => setConfirming(false)} onOpenChange={setConfirming} open={confirming} title="Delete the scenario?" />
     </Section>
+    <Section title="Charts"><Charts /></Section>
     <Section title="Editors">
       <div className="grid w-full grid-cols-2 gap-3">
         <Panel className="h-[220px]" padding="flush">
