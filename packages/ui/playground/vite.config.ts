@@ -31,6 +31,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
+    include: ['monaco-editor', 'monaco-yaml'],
     exclude: [...PRISM_COMPONENTS],
   },
   plugins: [prismComponentsEsm(), typescriptStylesheets(FLOWMOCK_STYLESHEETS)],

@@ -1,5 +1,5 @@
 import { DeleteRegular, ServerRegular } from '@fluentui/react-icons';
-import { StrictMode, useState } from 'react';
+import { StrictMode, Suspense, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import criticalCss from 'virtual:flowmock-critical.css?inline';
@@ -14,6 +14,7 @@ import { DashboardPageHeader } from '../src/controls/dashboard-page-header.tsx';
 import { EmptyState } from '../src/controls/empty-state.tsx';
 import { HttpMethodBadge, HttpStatusBadge } from '../src/controls/http-badge.tsx';
 import { PANEL_STACK_CLASS } from '../src/controls/layout.ts';
+import { LazyBodyEditor, LazyYamlEditor } from '../src/controls/lazy-editors.ts';
 import { ContentLoadingScreen } from '../src/controls/loading-screen.tsx';
 import { MultiselectCombobox, valuesAsOptions } from '../src/controls/multiselect-combobox.tsx';
 import { OutcomeMessageBar } from '../src/controls/outcome-message-bar.tsx';
@@ -85,6 +86,16 @@ const Section = ({ title, children }: { title: string; children: React.ReactNode
   <div className="flex flex-wrap items-center gap-3">{children}</div>
 </section>;
 
+const scenarioSchema = {
+  type: 'object',
+  properties: {
+    name: { type: 'string', description: 'The scenario\'s name.' },
+    stream: { type: 'boolean', description: 'Whether replies stream.' },
+  },
+  required: ['name'],
+  additionalProperties: false,
+};
+
 const rows = [
   { name: 'anthropic-messages', recordings: 12, outcome: 'completed' },
   { name: 'openai-responses', recordings: 7, outcome: 'truncated' },
@@ -98,6 +109,7 @@ const Playground = () => {
   const [range, setRange] = useState('1h');
   const [models, setModels] = useState<string[]>(['claude-sonnet-5-5']);
   const [confirming, setConfirming] = useState(false);
+  const [scenario, setScenario] = useState('name: demo\nstream: sometimes\n');
 
   return <main className="grid gap-8 p-[var(--flowmock-page-inset)]">
     <DashboardPageHeader actions={<Button appearance="primary">Action</Button>} description="Controls rendered through the WinUI layer." title="Playground" />
@@ -141,6 +153,20 @@ const Playground = () => {
       </Field>
       <Button onClick={() => setConfirming(true)}>Confirm dialog</Button>
       <ConfirmDialog actionLabel="Delete" message="The scenario and its history are removed." onConfirm={() => setConfirming(false)} onOpenChange={setConfirming} open={confirming} title="Delete the scenario?" />
+    </Section>
+    <Section title="Editors">
+      <div className="grid w-full grid-cols-2 gap-3">
+        <Panel className="h-[220px]" padding="flush">
+          <Suspense fallback={<ContentLoadingScreen label="Loading…" />}>
+            <LazyBodyEditor json label="Response body" text={'{\n  "id": "msg_01",\n  "type": "message",\n  "content": [{ "type": "text", "text": "Hello" }]\n}'} />
+          </Suspense>
+        </Panel>
+        <Panel className="h-[220px]" padding="flush">
+          <Suspense fallback={<ContentLoadingScreen label="Loading…" />}>
+            <LazyYamlEditor label="Scenario" onChange={setScenario} schema={scenarioSchema} value={scenario} />
+          </Suspense>
+        </Panel>
+      </div>
     </Section>
     <Section title="Buttons">
       <Button appearance="primary">Primary</Button>

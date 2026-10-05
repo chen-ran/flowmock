@@ -47,6 +47,8 @@
     "@fluentui/react-toast": "^9.8.1",
     "culori": "^4.0.2",
     "i18next": "^26.3.6",
+    "monaco-editor": "0.54.0",
+    "monaco-yaml": "^5.5.1",
     "overlayscrollbars": "2.13.0",
     "prismjs": "^1.30.0",
     "react": "^19.2.8",

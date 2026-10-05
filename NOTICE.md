@@ -48,6 +48,7 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/ui/src/i18n/locales/*` | strings from `apps/web/src/i18n/locales/*` | The control strings under `ui`, from `common.*` and `dashboard.charts.series.*`. |
 | `packages/ui/__tests__/i18n/*` | `apps/web/__tests__/i18n/*` | Rewritten against the factory, the `ui` locales and an isolated instance. |
 | `packages/ui/src/controls/*` | `apps/web/src/components/ui/*` (same names) | `floway` identifiers renamed `flowmock`; strings read from the `ui` namespace; comments point at FlowMock paths. |
+| `packages/ui/src/controls/{yaml-editor.tsx,yaml.worker.ts}` | `apps/web/src/components/upstream-editor/{models-yaml-editor.tsx,models-yaml.worker.ts}` | A generic YAML editor with an optional JSON Schema, an accessible name and the body viewer's type metrics. |
 | `packages/ui/src/lib/page-navigation.ts` | `apps/web/src/lib/page-navigation.ts` | History-state mark renamed `flowmockPageChange`. |
 | `packages/ui/__tests__/controls/*` | `apps/web/__tests__/components/ui/*` (same names) | Paths only. |
 
