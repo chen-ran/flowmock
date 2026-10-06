@@ -12,6 +12,7 @@ export default [
     route('scenarios/new', 'routes/scenario-new.tsx'),
     route('scenarios/:name', 'routes/scenario-editor.tsx'),
     route('keys', 'routes/keys.tsx'),
+    route('monitor', 'routes/monitor.tsx'),
     route('settings', 'routes/settings.tsx'),
   ]),
 ] satisfies RouteConfig;

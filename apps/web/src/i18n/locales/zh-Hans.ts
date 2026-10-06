@@ -291,6 +291,47 @@ const zhHans = {
       },
       signOutDescription: '结束此浏览器的会话。',
     },
+    monitor: {
+      description: '实时回放：首 token 时间、输出速度、吞吐和注入的故障，每个点统计最近一分钟，显示最近十分钟。',
+      series: '序列',
+      waiting: '正在等待第一份读数…',
+      noReplays: '最近十分钟没有回放',
+      noFaults: '最近十分钟没有注入故障',
+      status: {
+        connecting: '正在连接',
+        live: '实时',
+        reconnecting: '正在重连',
+        paused: '已暂停',
+      },
+      dropped: {
+        title: '实时数据流已断开',
+        description: '正在重试，每次失败后等待更久。图表会保留已有数据。',
+      },
+      quantiles: {
+        p50: 'p50',
+        p90: 'p90',
+        p99: 'p99',
+      },
+      charts: {
+        ttft: '首 token 时间',
+        tps: '输出速度',
+        throughput: '吞吐',
+        faults: '注入的故障',
+      },
+      throughput: {
+        rps: '每秒请求数',
+        active: '进行中',
+      },
+      summary: {
+        rps: '每秒请求数',
+        active: '进行中',
+        ttft: '首 token 时间 p50',
+        tps: '输出速度 p50',
+        errors: '最近一分钟错误',
+        errorsOf: '{{requests, count}} 次中 {{errors, count}} 次',
+        faults: '最近一分钟故障',
+      },
+    },
     scenarios: {
       description: '回放 key 如何应答：选哪条录制、每一帧何时发出、链路对字节做什么、注入哪些故障。',
       refresh: '刷新场景',

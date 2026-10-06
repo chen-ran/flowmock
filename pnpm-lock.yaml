@@ -197,6 +197,9 @@ importers:
       '@flowmock/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@fluentui/react-charts':
+        specifier: 9.3.22
+        version: 9.3.22(patch_hash=a8bd95e1c6e43665fa49850716d2bf5e123b05b959f4b88cc83526cbedeeed35)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)
       '@fluentui/react-components':
         specifier: 9.74.4
         version: 9.74.4(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(scheduler@0.27.0)

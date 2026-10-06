@@ -299,6 +299,47 @@ const en = {
       },
       signOutDescription: 'End this browser\'s session.',
     },
+    monitor: {
+      description: 'Replays as they happen: time to first token, output speed, throughput and injected faults, each over the last minute, for the last ten minutes.',
+      series: 'Series',
+      waiting: 'Waiting for the first reading…',
+      noReplays: 'No replays in the last ten minutes',
+      noFaults: 'No faults injected in the last ten minutes',
+      status: {
+        connecting: 'Connecting',
+        live: 'Live',
+        reconnecting: 'Reconnecting',
+        paused: 'Paused',
+      },
+      dropped: {
+        title: 'The live stream dropped',
+        description: 'Trying again, waiting a little longer after each failure. The charts keep what they had.',
+      },
+      quantiles: {
+        p50: 'p50',
+        p90: 'p90',
+        p99: 'p99',
+      },
+      charts: {
+        ttft: 'Time to first token',
+        tps: 'Output speed',
+        throughput: 'Throughput',
+        faults: 'Injected faults',
+      },
+      throughput: {
+        rps: 'Requests per second',
+        active: 'In flight',
+      },
+      summary: {
+        rps: 'Requests per second',
+        active: 'In flight',
+        ttft: 'TTFT p50',
+        tps: 'Output speed p50',
+        errors: 'Errors, last minute',
+        errorsOf: '{{errors, count}} of {{requests, count}}',
+        faults: 'Faults, last minute',
+      },
+    },
     scenarios: {
       description: 'How a replay key answers: which recording it picks, when each frame goes out, what the link does to the bytes and which failures it injects.',
       refresh: 'Refresh scenarios',

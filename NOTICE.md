@@ -36,6 +36,7 @@ Every ported file names its origin in a header comment. The ports are:
 | `apps/web/src/components/sidebar/{nav.tsx,nav-selection-indicator.tsx,pages.ts}` | `apps/web/src/components/sidebar/*` | FlowMock's pages; settings in the footer; signing out offered only to a session. |
 | `apps/web/__tests__/match-media-stub.ts`, `apps/web/__tests__/components/sidebar/nav-selection-indicator_test.tsx` | `apps/web/__tests__/match-media-stub.ts`, the indicator suite of `apps/web/__tests__/winui/motion_test.tsx` | Paths only. |
 | `apps/web/src/lib/{format-time,format-duration,format-number,no-reading}.ts` | `apps/web/src/lib/*` (same names) | Adds `compactDateTime` and `formatTokens`; keeps only the number formats the pages use. |
+| `apps/web/src/components/monitor/live-chart.tsx` | `apps/web/src/components/performance/chart.tsx` | Plots live snapshots on a linear axis with second- or minute-rounded ticks; one value column in the callout; an area form for stacked series. |
 | `apps/web/src/routes/scenario-editor.tsx` (the leave guard only) | `apps/web/src/components/upstream-editor/page.tsx` | Guards one YAML source instead of a react-hook-form draft. |
 | `apps/web/__tests__/api/client_test.ts`, `apps/web/__tests__/routes/session-gate_test.ts` | same paths under `apps/web` | Adds the session header cases. |
 | `eslint.config.ts` | `eslint.config.ts` | Trimmed to FlowMock's packages; adds the runtime-independence rules for `packages/*` and enforces the Fluent, toast and `react-i18next` import boundaries that Floway keeps by convention. |

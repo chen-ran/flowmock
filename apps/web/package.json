@@ -13,6 +13,7 @@
   "dependencies": {
     "@flowmock/protocols": "workspace:*",
     "@flowmock/ui": "workspace:*",
+    "@fluentui/react-charts": "9.3.22",
     "@fluentui/react-components": "9.74.4",
     "@fluentui/react-icons": "2.0.334",
     "hono": "^4.13.13",
