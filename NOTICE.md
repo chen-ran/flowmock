@@ -29,6 +29,10 @@ Every ported file names its origin in a header comment. The ports are:
 | `apps/web/src/{root,entry.client}.tsx`, `apps/web/src/critical.css.ts` | `apps/web/src/{root,entry.client}.tsx`, `apps/web/src/critical.css.ts` | FlowMock's title and icon; the error page shows the trace without source-map restoration. |
 | `apps/web/src/components/{gradient-background,navigation-progress}{.tsx,.css.ts}`, `apps/web/src/components/language-sync.tsx` | `apps/web/src/components/*` (same names) | `floway` identifiers renamed `flowmock`. |
 | `apps/web/src/i18n/{index,shell}.ts` | `apps/web/src/i18n/{index,resources,shell}.ts` | Initialization goes through `initI18n` from `@flowmock/ui/i18n`. |
+| `apps/web/src/api/client.ts`, `apps/web/src/auth/session.ts`, `apps/web/src/lib/{error-message,error-payload}.ts` | same paths under `apps/web` | Typed against `@flowmock/server/app-type` under `/api`; FlowMock's admin session header and storage key. |
+| `apps/web/src/stores/auth-store.ts`, `apps/web/src/routes/guards.ts` | same paths under `apps/web` | Hold how the server let the browser in (session, admin key or open) rather than a user; an unanswered server is an error, not a sign-in. |
+| `apps/web/src/components/{login-form,language-selector,logo}.tsx`, `apps/web/src/routes/login.tsx` | `apps/web/src/components/*`, `apps/web/src/routes/home.tsx` | One admin-key field instead of a username and password; FlowMock's mark. |
+| `apps/web/__tests__/api/client_test.ts`, `apps/web/__tests__/routes/session-gate_test.ts` | same paths under `apps/web` | Adds the session header cases. |
 | `eslint.config.ts` | `eslint.config.ts` | Trimmed to FlowMock's packages; adds the runtime-independence rules for `packages/*` and enforces the Fluent, toast and `react-i18next` import boundaries that Floway keeps by convention. |
 | `packages/ui/__tests__/{setup,match-media-stub,local-storage-stub,settle}.ts` | `apps/web/__tests__/*` (same names) | Setup loads no app i18n and skips DOM preparation for Node-environment suites. |
 | `packages/ui/src/fluent.ts`, `packages/ui/src/font-stacks.ts` | `apps/web/src/fluent.ts`, `apps/web/src/font-stacks.ts` | Comment wording. |

@@ -14,3 +14,22 @@ Object.defineProperty(document, 'fonts', {
   configurable: true,
   value: { ready: Promise.resolve() },
 });
+
+// Node's own localStorage global shadows the one the DOM environment installs,
+// and it is inert unless the runtime was started with a store to back it, so
+// getItem is simply absent. The environment's own implementation is left alone
+// wherever it works.
+if (typeof window.localStorage?.getItem !== 'function') {
+  const store = new Map<string, string>();
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: {
+      get length() { return store.size; },
+      clear: () => store.clear(),
+      getItem: (key: string) => store.get(key) ?? null,
+      key: (index: number) => [...store.keys()][index] ?? null,
+      removeItem: (key: string) => { store.delete(key); },
+      setItem: (key: string, value: string) => { store.set(key, String(value)); },
+    },
+  });
+}
