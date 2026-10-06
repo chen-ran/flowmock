@@ -49,7 +49,9 @@ export const targetInputSchema = z.object({
   id: z.string().regex(/^[a-z0-9][a-z0-9._-]*$/i, 'use letters, digits, dot, underscore or dash'),
   name: z.string().optional(),
   baseUrl: z.url({ protocol: /^https?$/ }),
-  headers: z.record(z.string(), z.string()).default({}),
+  // null keeps the value already stored under that name, so an edit made
+  // against masked headers need not restate a secret it cannot see.
+  headers: z.record(z.string(), z.string().nullable()).default({}),
 }).strict();
 
 export const keyInputSchema = z.object({
@@ -113,7 +115,14 @@ export class ConfigStore {
   upsertTarget(input: TargetInput, now = Date.now()): Target {
     const parsed = targetInputSchema.safeParse(input);
     if (!parsed.success) throw new ConfigError(`invalid target: ${z.prettifyError(parsed.error)}`);
-    const { id, name, baseUrl, headers } = parsed.data;
+    const { id, name, baseUrl } = parsed.data;
+    const stored = this.getTarget(id)?.headers ?? {};
+    const headers = Object.fromEntries(Object.entries(parsed.data.headers).map(([header, value]) => {
+      if (value !== null) return [header, value];
+      const kept = stored[header];
+      if (kept === undefined) throw new ConfigError(`target ${id} has no stored ${header} header to keep`);
+      return [header, kept];
+    }));
     this.db.prepare(`INSERT INTO targets (id, name, base_url, headers, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
       ON CONFLICT (id) DO UPDATE SET name = excluded.name, base_url = excluded.base_url, headers = excluded.headers, updated_at = excluded.updated_at`)
       .run(id, name ?? id, baseUrl.replace(/\/+$/, ''), JSON.stringify(headers), now, now);

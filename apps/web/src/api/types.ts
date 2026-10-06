@@ -12,3 +12,7 @@ export type RecordedChunkSummary = RecordingDetail['response']['chunks'][number]
 
 export type CassetteSummary = InferResponseType<typeof api.cassettes.$get, 200>['items'][number];
 export type CassetteDetail = InferResponseType<typeof api.cassettes[':id']['$get'], 200>;
+
+export type KeyBinding = InferResponseType<typeof api.keys.$get, 200>['items'][number];
+export type RecordingTarget = InferResponseType<typeof api.targets.$get, 200>['items'][number];
+export type ScenarioSummary = InferResponseType<typeof api.scenarios.$get, 200>['items'][number];

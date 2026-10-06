@@ -8,6 +8,7 @@ export default [
     route('corpus/:id', 'routes/corpus-detail.tsx'),
     route('cassettes', 'routes/cassettes.tsx'),
     route('cassettes/:id', 'routes/cassette-detail.tsx'),
+    route('keys', 'routes/keys.tsx'),
     route('settings', 'routes/settings.tsx'),
   ]),
 ] satisfies RouteConfig;
