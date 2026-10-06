@@ -16,3 +16,7 @@ export type CassetteDetail = InferResponseType<typeof api.cassettes[':id']['$get
 export type KeyBinding = InferResponseType<typeof api.keys.$get, 200>['items'][number];
 export type RecordingTarget = InferResponseType<typeof api.targets.$get, 200>['items'][number];
 export type ScenarioSummary = InferResponseType<typeof api.scenarios.$get, 200>['items'][number];
+export type ScenarioDetail = InferResponseType<typeof api.scenarios[':name']['$get'], 200>;
+export type ScenarioPreview = InferResponseType<typeof api.scenarios[':name']['preview']['$post'], 200>;
+export type PreviewPlan = ScenarioPreview['plan'];
+export type PreviewTrace = ScenarioPreview['trace'];

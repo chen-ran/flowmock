@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml, YAMLParseError } from 'yaml';
 import { z } from 'zod';
 
 import { compileTransforms, DEFAULT_SCENARIO, type Scenario, scenarioSchema } from '@flowmock/core';
@@ -36,14 +36,30 @@ export interface StoredScenario {
   updatedAt: number;
 }
 
+// A field a configuration document gets wrong, by its path in the document.
+export interface ConfigIssue {
+  path: Array<string | number>;
+  message: string;
+}
+
 export class ConfigError extends Error {
   readonly status: 400 | 404 | 409;
+  // Where in the submitted document the problem lies, for an editor to mark:
+  // the invalid fields of a well-formed document, or the 1-based line and
+  // column at which the text stopped being YAML.
+  readonly issues: ConfigIssue[] | undefined;
+  readonly position: { line: number; col: number } | undefined;
 
-  constructor(message: string, status: 400 | 404 | 409 = 400, options?: ErrorOptions) {
+  constructor(message: string, status: 400 | 404 | 409 = 400, options?: ErrorOptions & { issues?: ConfigIssue[]; position?: { line: number; col: number } }) {
     super(message, options);
     this.status = status;
+    this.issues = options?.issues;
+    this.position = options?.position;
   }
 }
+
+const issuesOf = (error: z.ZodError): ConfigIssue[] =>
+  error.issues.map(issue => ({ path: issue.path.map(segment => (typeof segment === 'symbol' ? String(segment) : segment)), message: issue.message }));
 
 export const targetInputSchema = z.object({
   id: z.string().regex(/^[a-z0-9][a-z0-9._-]*$/i, 'use letters, digits, dot, underscore or dash'),
@@ -71,12 +87,16 @@ export const parseScenarioSource = (source: string, expectedName?: string): Scen
   try {
     value = parseYaml(source);
   } catch (error) {
-    throw new ConfigError(`scenario is not valid YAML: ${error instanceof Error ? error.message : String(error)}`, 400, { cause: error });
+    const position = error instanceof YAMLParseError ? error.linePos?.[0] : undefined;
+    throw new ConfigError(`scenario is not valid YAML: ${error instanceof Error ? error.message : String(error)}`, 400, { cause: error, position });
   }
   if (expectedName !== undefined && value !== null && typeof value === 'object' && !('name' in value)) value = { ...value, name: expectedName };
   const parsed = scenarioSchema.safeParse(value);
-  if (!parsed.success) throw new ConfigError(`invalid scenario: ${z.prettifyError(parsed.error)}`, 400, { cause: parsed.error });
-  if (expectedName !== undefined && parsed.data.name !== expectedName) throw new ConfigError(`scenario name ${parsed.data.name} does not match ${expectedName}`);
+  if (!parsed.success) throw new ConfigError(`invalid scenario: ${z.prettifyError(parsed.error)}`, 400, { cause: parsed.error, issues: issuesOf(parsed.error) });
+  if (expectedName !== undefined && parsed.data.name !== expectedName) {
+    const message = `scenario name ${parsed.data.name} does not match ${expectedName}`;
+    throw new ConfigError(message, 400, { issues: [{ path: ['name'], message }] });
+  }
   try {
     compileTransforms(parsed.data.transforms);
   } catch (error) {

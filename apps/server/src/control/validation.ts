@@ -25,5 +25,12 @@ export const queryParams = <S extends z.ZodObject>(schema: S): MiddlewareHandler
 
 export const configErrorResponse = (c: Context<AdminEnv>, error: unknown) => {
   if (!(error instanceof ConfigError)) throw error;
-  return c.json({ error: { code: 'invalid_request', message: error.message } }, error.status);
+  return c.json({
+    error: {
+      code: 'invalid_request',
+      message: error.message,
+      ...(error.issues && { issues: error.issues }),
+      ...(error.position && { position: error.position }),
+    },
+  }, error.status);
 };

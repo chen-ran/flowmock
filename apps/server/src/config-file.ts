@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { z } from 'zod';
@@ -30,7 +31,13 @@ const configFileSchema = z.object({
   shutdownGraceMs: z.number().int().nonnegative().default(10_000),
 }).strict();
 
-export type ConfigFile = z.infer<typeof configFileSchema>;
+export type ConfigFile = z.infer<typeof configFileSchema> & {
+  // The sources of the scenario files, as written: their comments and layout
+  // are what the management app's editor shows. A file whose values name
+  // environment variables is kept as YAML written afresh from the expanded
+  // values instead.
+  scenarioFiles: string[];
+};
 
 export const runtimeConfig = (config: ConfigFile | null, env: NodeJS.ProcessEnv = process.env) => {
   const persist = env.FLOWMOCK_TIMELINE_PERSIST;
@@ -64,16 +71,23 @@ const expandValues = (value: unknown, env: NodeJS.ProcessEnv): unknown => {
 
 const readYaml = (path: string, env: NodeJS.ProcessEnv): unknown => expandValues(parseYaml(readFileSync(path, 'utf8')), env);
 
+const readScenarioFile = (path: string, env: NodeJS.ProcessEnv): string => {
+  const source = readFileSync(path, 'utf8');
+  const value: unknown = parseYaml(source);
+  const expanded = expandValues(value, env);
+  return isDeepStrictEqual(expanded, value) ? source : stringifyYaml(expanded);
+};
+
 export const loadConfigFile = (path: string, env: NodeJS.ProcessEnv = process.env): ConfigFile => {
   const parsed = configFileSchema.safeParse(readYaml(path, env));
   if (!parsed.success) throw new Error(`invalid flowmock config ${path}: ${z.prettifyError(parsed.error)}`);
-  const config = parsed.data;
+  const config: ConfigFile = { ...parsed.data, scenarioFiles: [] };
   const relative = (target: string) => (isAbsolute(target) ? target : resolve(dirname(path), target));
   config.corpus = config.corpus.map(relative);
   if (config.scenarioDir !== undefined) {
     const dir = relative(config.scenarioDir);
     for (const file of readdirSync(dir).filter(name => /\.ya?ml$/.test(name)).sort()) {
-      config.scenarios.push(readYaml(join(dir, file), env) as Record<string, unknown>);
+      config.scenarioFiles.push(readScenarioFile(join(dir, file), env));
     }
   }
   return config;
@@ -84,8 +98,9 @@ export const loadConfigFile = (path: string, env: NodeJS.ProcessEnv = process.en
 export const applyConfigFile = async (services: Services, config: ConfigFile): Promise<{ targets: number; scenarios: number; keys: number; recordings: number }> => {
   for (const target of config.targets) services.config.upsertTarget(target);
   for (const scenario of config.scenarios) services.config.upsertScenario(stringifyYaml(scenario));
+  for (const source of config.scenarioFiles) services.config.upsertScenario(source);
   for (const key of config.keys) services.config.upsertKey(key);
   let recordings = 0;
   for (const file of config.corpus) recordings += (await importCorpus(services, readFileSync(file, 'utf8'))).recordings;
-  return { targets: config.targets.length, scenarios: config.scenarios.length, keys: config.keys.length, recordings };
+  return { targets: config.targets.length, scenarios: config.scenarios.length + config.scenarioFiles.length, keys: config.keys.length, recordings };
 };

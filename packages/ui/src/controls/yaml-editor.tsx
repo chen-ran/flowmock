@@ -36,8 +36,23 @@ let modelSerial = 0;
 // scheme follows.
 const monacoTheme = (dark: boolean) => dark ? 'vs-dark' : 'vs';
 
-export default function YamlEditor({ label, onChange, schema, value }: {
+// A problem found outside the editor -- by the server, say -- underlined where
+// it lies. Lines and columns are 1-based; the end column is exclusive.
+export interface YamlMarker {
+  line: number;
+  column: number;
+  endLine: number;
+  endColumn: number;
+  message: string;
+}
+
+// Kept apart from the language service's own markers, so publishing these
+// never clears the schema's diagnostics or the other way round.
+const MARKER_OWNER = 'flowmock';
+
+export default function YamlEditor({ label, markers, onChange, schema, value }: {
   label: string;
+  markers?: readonly YamlMarker[];
   onChange: (value: string) => void;
   /** Validates, completes and documents the document while it is edited. */
   schema?: SchemasSettings['schema'];
@@ -105,6 +120,19 @@ export default function YamlEditor({ label, onChange, schema, value }: {
   useEffect(() => {
     editorRef.current?.updateOptions({ ariaLabel: label });
   }, [label]);
+
+  useEffect(() => {
+    const model = editorRef.current?.getModel();
+    if (!model) return;
+    monaco.editor.setModelMarkers(model, MARKER_OWNER, (markers ?? []).map(marker => ({
+      startLineNumber: marker.line,
+      startColumn: marker.column,
+      endLineNumber: marker.endLine,
+      endColumn: marker.endColumn,
+      message: marker.message,
+      severity: monaco.MarkerSeverity.Error,
+    })));
+  }, [markers]);
 
   useEffect(() => {
     editorRef.current?.updateOptions({ theme: monacoTheme(dark) });

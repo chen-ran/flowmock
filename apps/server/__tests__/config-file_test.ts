@@ -39,7 +39,8 @@ describe('flowmock.yaml', () => {
 
   it('applies targets, scenario files and keys', async () => {
     await mkdir(join(dir, 'scenarios'));
-    await writeFile(join(dir, 'scenarios', 'slow.yaml'), 'name: slow\ntiming: { mode: recorded, scale: 3 }\n');
+    await writeFile(join(dir, 'scenarios', 'slow.yaml'), '# Three times slower.\nname: slow\ntiming: { mode: recorded, scale: 3 }\n');
+    await writeFile(join(dir, 'scenarios', 'seeded.yaml'), '# Seeded from the environment.\nname: seeded\nseed: "${SCENARIO_SEED}"\n');
     await writeFile(join(dir, 'flowmock.yaml'), [
       'targets:',
       '  - id: anthropic',
@@ -55,10 +56,15 @@ describe('flowmock.yaml', () => {
       '  - { key: fm-replay-slow, replay: slow }',
       '',
     ].join('\n'));
-    const config = loadConfigFile(join(dir, 'flowmock.yaml'), { UPSTREAM_KEY: 'sk-ant-xyz' });
-    expect(await applyConfigFile(flowmock.services, config)).toEqual({ targets: 1, scenarios: 2, keys: 2, recordings: 0 });
+    const config = loadConfigFile(join(dir, 'flowmock.yaml'), { UPSTREAM_KEY: 'sk-ant-xyz', SCENARIO_SEED: 'seed-7' });
+    expect(await applyConfigFile(flowmock.services, config)).toEqual({ targets: 1, scenarios: 3, keys: 2, recordings: 0 });
     expect(flowmock.services.config.getTarget('anthropic')?.headers).toEqual({ 'x-api-key': 'sk-ant-xyz' });
     expect(flowmock.services.config.getScenario('slow')?.scenario.timing).toEqual({ mode: 'recorded', scale: 3 });
+    // A scenario file is stored as written, comments and all, unless it names
+    // environment variables, whose values it is stored with instead.
+    expect(flowmock.services.config.getScenario('slow')?.source).toBe('# Three times slower.\nname: slow\ntiming: { mode: recorded, scale: 3 }\n');
+    expect(flowmock.services.config.getScenario('seeded')?.scenario.seed).toBe('seed-7');
+    expect(flowmock.services.config.getScenario('seeded')?.source).not.toContain('SCENARIO_SEED');
     expect(flowmock.services.config.getKey('fm-replay-slow')).toMatchObject({ mode: 'replay', scenario: 'slow' });
   });
 });

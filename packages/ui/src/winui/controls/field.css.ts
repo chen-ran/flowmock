@@ -67,9 +67,13 @@ export const fieldCss = `
    https://github.com/microsoft/microsoft-ui-xaml/blob/188f602b27cdb47572b28c380e9c087b02e1ccee/controls/dev/ComboBox/ComboBox_themeresources.xaml#L257
    https://github.com/microsoft/microsoft-ui-xaml/blob/188f602b27cdb47572b28c380e9c087b02e1ccee/controls/dev/CommonStyles/DatePicker_themeresources.xaml#L14
    https://github.com/microsoft/microsoft-ui-xaml/blob/188f602b27cdb47572b28c380e9c087b02e1ccee/controls/dev/CommonStyles/CalendarDatePicker_themeresources.xaml#L18
-   https://github.com/microsoft/microsoft-ui-xaml/blob/188f602b27cdb47572b28c380e9c087b02e1ccee/controls/dev/CommonStyles/TextBox_themeresources.xaml#L256-L260 */
-.fui-Field:has(:disabled) > .fui-Field__label.fui-Field__label,
-.fui-Field:has([aria-disabled='true']) > .fui-Field__label.fui-Field__label {
+   https://github.com/microsoft/microsoft-ui-xaml/blob/188f602b27cdb47572b28c380e9c087b02e1ccee/controls/dev/CommonStyles/TextBox_themeresources.xaml#L256-L260
+
+   A SpinButton disables its step buttons at its bounds while the field itself
+   stays enabled, so those two are not the control's state.
+   https://github.com/microsoft/fluentui/blob/6dee27b023a2d989f032b4adacb2135d336a67fb/packages/react-components/react-spinbutton/library/src/components/SpinButton/useSpinButton.tsx#L310-L336 */
+.fui-Field:has(:disabled:not(.fui-SpinButton__incrementButton, .fui-SpinButton__decrementButton)) > .fui-Field__label.fui-Field__label,
+.fui-Field:has([aria-disabled='true']:not(.fui-SpinButton__incrementButton, .fui-SpinButton__decrementButton)) > .fui-Field__label.fui-Field__label {
   color: var(--winui-text-fill-disabled);
 }
 

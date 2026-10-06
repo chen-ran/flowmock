@@ -36,6 +36,7 @@ Every ported file names its origin in a header comment. The ports are:
 | `apps/web/src/components/sidebar/{nav.tsx,nav-selection-indicator.tsx,pages.ts}` | `apps/web/src/components/sidebar/*` | FlowMock's pages; settings in the footer; signing out offered only to a session. |
 | `apps/web/__tests__/match-media-stub.ts`, `apps/web/__tests__/components/sidebar/nav-selection-indicator_test.tsx` | `apps/web/__tests__/match-media-stub.ts`, the indicator suite of `apps/web/__tests__/winui/motion_test.tsx` | Paths only. |
 | `apps/web/src/lib/{format-time,format-duration,format-number,no-reading}.ts` | `apps/web/src/lib/*` (same names) | Adds `compactDateTime` and `formatTokens`; keeps only the number formats the pages use. |
+| `apps/web/src/routes/scenario-editor.tsx` (the leave guard only) | `apps/web/src/components/upstream-editor/page.tsx` | Guards one YAML source instead of a react-hook-form draft. |
 | `apps/web/__tests__/api/client_test.ts`, `apps/web/__tests__/routes/session-gate_test.ts` | same paths under `apps/web` | Adds the session header cases. |
 | `eslint.config.ts` | `eslint.config.ts` | Trimmed to FlowMock's packages; adds the runtime-independence rules for `packages/*` and enforces the Fluent, toast and `react-i18next` import boundaries that Floway keeps by convention. |
 | `packages/ui/__tests__/{setup,match-media-stub,local-storage-stub,settle}.ts` | `apps/web/__tests__/*` (same names) | Setup loads no app i18n and skips DOM preparation for Node-environment suites. |
@@ -43,7 +44,7 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/ui/src/base-theme.ts` | `apps/web/src/theme.ts` | Renamed; `packages/ui/src/theme.ts` is FlowMock's public entry with `useSystemTheme`, taken from `apps/web/src/root.tsx`. |
 | `packages/ui/src/critical.css.ts` | `apps/web/src/critical.css.ts` | Only the document rules; app components add their own sheets. |
 | `packages/ui/src/lib/{color,legacy-css-color,use-media-query}.ts` | `apps/web/src/lib/*` (same names) | Unchanged. |
-| `packages/ui/src/winui/**` | `apps/web/src/winui/**` | `floway` identifiers renamed `flowmock`; the color-picker sheet is not ported; comments point at FlowMock paths; optional chains in `switch-drag.tsx`. |
+| `packages/ui/src/winui/**` | `apps/web/src/winui/**` | `floway` identifiers renamed `flowmock`; the color-picker sheet is not ported; comments point at FlowMock paths; optional chains in `switch-drag.tsx`; a SpinButton's step buttons, disabled at its bounds, no longer grey its field's label (`controls/field.css.ts`). |
 | `packages/ui/__tests__/render.tsx`, `packages/ui/__tests__/{winui,lib}/**` | `apps/web/__tests__/render.tsx`, `apps/web/__tests__/{winui,lib}/**` | `motion_test.tsx` keeps only the presence suite; the navigation indicator suite moves with the app shell. |
 | `packages/ui/src/vite/typescript-stylesheets.ts` | `apps/web/vite.config.ts` (`typescriptStylesheets`) | Takes the virtual sheet table as an argument; module paths are absolute. |
 | `packages/ui/src/vite/legacy-css.ts` | `apps/web/vite.config.ts`, `apps/web/postcss.config.ts` | The CSS build target and the legacy-colour PostCSS plugin as exports. |

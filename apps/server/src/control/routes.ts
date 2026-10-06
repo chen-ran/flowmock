@@ -8,7 +8,7 @@ import { exportCorpus, importCorpus } from './portable.ts';
 import { configErrorResponse, jsonBody, queryParams } from './validation.ts';
 import { matchEndpoint } from '../data-plane/endpoints.ts';
 import type { Services } from '../services.ts';
-import { ConfigError, keyInputSchema, maskHeaders, type StoredScenario, type Target, targetInputSchema } from '../store/config-store.ts';
+import { ConfigError, keyInputSchema, maskHeaders, parseScenarioSource, type StoredScenario, type Target, targetInputSchema } from '../store/config-store.ts';
 import { FLOWMOCK_VERSION } from '../version.ts';
 import {
   adapterFor,
@@ -28,6 +28,8 @@ const scenarioView = (stored: StoredScenario) => ({ name: stored.name, builtIn: 
 const targetView = (target: Target) => ({ ...target, headers: maskHeaders(target.headers) });
 
 const previewSchema = z.object({
+  // An unsaved scenario's source, previewed in place of the stored one.
+  source: z.string().optional(),
   protocol: z.enum(PROTOCOLS),
   // Request path; Gemini reads the model and streaming choice from it.
   path: z.string().optional(),
@@ -158,9 +160,14 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
   // Plans a request against a scenario without sending anything: which
   // recording, which fault, and every write with its time.
   .post('/scenarios/:name/preview', jsonBody(previewSchema), async c => {
-    const stored = services.config.getScenario(c.req.param('name'));
-    if (!stored) return c.json({ error: { code: 'not_found', message: 'scenario not found' } }, 404);
     const input = c.req.valid('json');
+    let scenario;
+    try {
+      scenario = input.source === undefined ? services.config.getScenario(c.req.param('name'))?.scenario : parseScenarioSource(input.source);
+    } catch (error) {
+      return configErrorResponse(c, error);
+    }
+    if (!scenario) return c.json({ error: { code: 'not_found', message: 'scenario not found' } }, 404);
     const path = input.path ?? '';
     const url = new URL(path || '/', 'http://flowmock.invalid');
     const endpoint = input.protocol === 'gemini-generate-content' ? matchEndpoint(url.pathname, url.search) : null;
@@ -174,8 +181,8 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
       pathStream: endpoint?.pathStream,
       session: input.session ?? null,
     });
-    const seed = input.seed ?? (stored.scenario.seed === undefined ? freshSeed() : String(stored.scenario.seed));
-    const outcome = await planReplay(prepared, { scenario: stored.scenario, callIndex: input.callIndex, seed, nowMs: Date.now(), scenarioElapsedMs: 0, inFlight: 1 }, services.corpus);
+    const seed = input.seed ?? (scenario.seed === undefined ? freshSeed() : String(scenario.seed));
+    const outcome = await planReplay(prepared, { scenario, callIndex: input.callIndex, seed, nowMs: Date.now(), scenarioElapsedMs: 0, inFlight: 1 }, services.corpus);
     const decoder = new TextDecoder();
     return c.json({
       trace: outcome.trace,
