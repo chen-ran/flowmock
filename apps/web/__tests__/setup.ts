@@ -9,6 +9,39 @@ import '../src/i18n/index.ts';
 // never arms itself.
 afterEach(cleanup);
 
+// happy-dom ships no Element.animate (the version is pinned in
+// pnpm-workspace.yaml), while every engine the app runs in has one, and the
+// shell starts its entrance animation on mount. An animation that finishes at
+// once stands in. Fluent's motion takes the native path once an element can
+// animate, and waits for onfinish, so the stand-in calls it as soon as it is
+// assigned. A suite asserting on animations installs its own.
+if (typeof Element.prototype.animate !== 'function') {
+  Object.defineProperty(Element.prototype, 'animate', {
+    configurable: true,
+    writable: true,
+    value: () => {
+      let onfinish: (() => void) | null = null;
+      return {
+        addEventListener: () => {},
+        cancel: () => {},
+        finish: () => {},
+        finished: Promise.resolve(),
+        oncancel: null,
+        pause: () => {},
+        persist: () => {},
+        play: () => {},
+        playState: 'finished',
+        reverse: () => {},
+        get onfinish() { return onfinish; },
+        set onfinish(handler: (() => void) | null) {
+          onfinish = handler;
+          if (handler) queueMicrotask(handler);
+        },
+      };
+    },
+  });
+}
+
 // happy-dom ships no FontFaceSet, while every engine the app runs in has one.
 Object.defineProperty(document, 'fonts', {
   configurable: true,

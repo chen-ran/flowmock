@@ -6,8 +6,8 @@ export interface TimelineOptions { persist?: boolean; retainDays?: number; maxEn
 
 export class TraceStore {
   private readonly db: DatabaseSync;
-  private readonly retainDays: number;
-  private readonly maxEntries: number;
+  readonly retainDays: number;
+  readonly maxEntries: number;
 
   constructor(db: DatabaseSync, options: TimelineOptions = {}) {
     this.db = db;

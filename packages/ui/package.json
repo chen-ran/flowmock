@@ -11,6 +11,7 @@
     "./gallery": { "import": "./src/gallery/gallery.tsx", "types": "./src/gallery/gallery.tsx" },
     "./global.css": "./src/global.css",
     "./i18n": { "import": "./src/i18n/index.ts", "types": "./src/i18n/index.ts" },
+    "./page-navigation": { "import": "./src/lib/page-navigation.ts", "types": "./src/lib/page-navigation.ts" },
     "./theme": { "import": "./src/theme.ts", "types": "./src/theme.ts" },
     "./uno": { "import": "./src/uno/preset.ts", "types": "./src/uno/preset.ts" },
     "./vite": { "import": "./src/vite/index.ts", "types": "./src/vite/index.ts" },

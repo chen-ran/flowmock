@@ -63,6 +63,14 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
   .get('/health', c => c.json({ ok: true, version: FLOWMOCK_VERSION }))
   .route('/auth', authRoutes(services))
   .use('*', adminAuth(services))
+  // What the management app shows on its settings page.
+  .get('/settings', c => c.json({
+    version: FLOWMOCK_VERSION,
+    adminKey: services.adminKey !== null,
+    timeline: services.traces === null
+      ? { persist: false as const }
+      : { persist: true as const, retainDays: services.traces.retainDays, maxEntries: services.traces.maxEntries },
+  }, 200))
 
 // ── Corpus ──
 
