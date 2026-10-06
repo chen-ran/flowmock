@@ -9,7 +9,10 @@
   "scripts": {
     "dev": "node apps/server/bin/flowmock.js",
     "start": "node apps/server/bin/flowmock.js",
-    "verify": "pnpm run lint && pnpm run typecheck && pnpm run test",
+    "dev:web": "pnpm --filter @flowmock/web run dev",
+    "build:web": "pnpm --filter @flowmock/web run build",
+    "typegen": "pnpm --filter @flowmock/web exec react-router typegen",
+    "verify": "pnpm run typegen && pnpm run lint && pnpm run typecheck && pnpm run test && pnpm run build:web",
     "lint": "eslint --cache .",
     "lint:fix": "eslint --cache . --fix",
     "typecheck": "pnpm -r run typecheck",

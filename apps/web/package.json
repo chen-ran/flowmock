@@ -1,0 +1,34 @@
+{
+  "name": "@flowmock/web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {},
+  "scripts": {
+    "dev": "react-router dev",
+    "build": "react-router build && pnpm run check:build-output",
+    "check:build-output": "jiti scripts/check-document-shell.ts",
+    "typecheck": "react-router typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@flowmock/ui": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router": "8.3.0",
+    "isbot": "^5"
+  },
+  "devDependencies": {
+    "@flowmock/server": "workspace:*",
+    "@react-router/dev": "8.3.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^22",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@unocss/postcss": "^66.7.5",
+    "happy-dom": "^20.11.1",
+    "jiti": "2.7.0",
+    "postcss": "^8.5.23",
+    "unocss": "^66.7.5",
+    "vite": "^8.1.5"
+  }
+}

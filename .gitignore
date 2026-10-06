@@ -3,6 +3,7 @@ node_modules/
 *.tsbuildinfo
 coverage/
 dist/
+.react-router/
 .env
 .idea/
 .claude/

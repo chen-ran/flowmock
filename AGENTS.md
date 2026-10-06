@@ -28,6 +28,7 @@
 | Docs | `docs/superpowers/plans` | Post-MVP implementation plans. |
 | Examples | `examples` | Example configuration, scenarios and the demo corpus. |
 | Package | `apps/server` | Serves the data plane, recording proxy and admin API on Node. |
+| Package | `apps/web` | The management app: a React Router SPA built into `dist/client` and served by `apps/server`. |
 | Package | `packages/core` | Selects, transforms, plans and runs replays. |
 | Package | `packages/protocols` | Defines wire types, decoders and reducers. |
 | Package | `packages/test-fixtures` | Provides recorded exchanges for tests. |

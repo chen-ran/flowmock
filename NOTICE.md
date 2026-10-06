@@ -25,6 +25,10 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/core/src/protocols/*` (output-frame detection) | `packages/gateway/src/data-plane/chat/shared/first-output-token.ts` | The classification is reused to measure TTFT and attribute output tokens. |
 | `apps/server/src/store/database.ts` (`applyMigrations`) | `apps/platform-node/src/migrate.ts` | Synchronous `node:sqlite` version. |
 | `apps/server/src/static-web.ts` | `apps/platform-node/src/static-web.ts` | FlowMock-owned paths, environment setting and build diagnostic; rejects raw dot-segment traversal and symlink escapes. |
+| `apps/web/{vite,react-router,postcss}.config.ts` | `apps/web/{vite,react-router,postcss}.config.ts` | FlowMock's server paths and ports; the stylesheet table, Prism plugin and legacy-colour policy come from `@flowmock/ui/vite`; the build bundles the prerender server graph whole. |
+| `apps/web/src/{root,entry.client}.tsx`, `apps/web/src/critical.css.ts` | `apps/web/src/{root,entry.client}.tsx`, `apps/web/src/critical.css.ts` | FlowMock's title and icon; the error page shows the trace without source-map restoration. |
+| `apps/web/src/components/{gradient-background,navigation-progress}{.tsx,.css.ts}`, `apps/web/src/components/language-sync.tsx` | `apps/web/src/components/*` (same names) | `floway` identifiers renamed `flowmock`. |
+| `apps/web/src/i18n/{index,shell}.ts` | `apps/web/src/i18n/{index,resources,shell}.ts` | Initialization goes through `initI18n` from `@flowmock/ui/i18n`. |
 | `eslint.config.ts` | `eslint.config.ts` | Trimmed to FlowMock's packages; adds the runtime-independence rules for `packages/*` and enforces the Fluent, toast and `react-i18next` import boundaries that Floway keeps by convention. |
 | `packages/ui/__tests__/{setup,match-media-stub,local-storage-stub,settle}.ts` | `apps/web/__tests__/*` (same names) | Setup loads no app i18n and skips DOM preparation for Node-environment suites. |
 | `packages/ui/src/fluent.ts`, `packages/ui/src/font-stacks.ts` | `apps/web/src/fluent.ts`, `apps/web/src/font-stacks.ts` | Comment wording. |
