@@ -191,6 +191,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@flowmock/protocols':
+        specifier: workspace:*
+        version: link:../../packages/protocols
       '@flowmock/ui':
         specifier: workspace:*
         version: link:../../packages/ui

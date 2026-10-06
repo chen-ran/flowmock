@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChunkFiles } from '../../src/store/chunk-files.ts';
-import { startTestServer, type TestServer } from '../support/flowmock.ts';
+import { ADMIN_KEY, startTestServer, type TestServer } from '../support/flowmock.ts';
 import { seedFixture } from '../support/seed.ts';
 import { anthropicText, chatText, responsesFunctionCall } from '@flowmock/test-fixtures';
 
@@ -92,5 +92,19 @@ describe('corpus management', () => {
     expect(await (await flowmock.admin('/stats')).json()).toMatchObject({ recordings: 1 });
     expect(row.chunk_file).toContain(items[2].id);
     expect((await flowmock.admin('/recordings/delete', { method: 'POST', body: '{"ids":[]}' })).status).toBe(400);
+  });
+
+  it('apportions the output tokens over the content frames of a recording', async () => {
+    const id = flowmock.services.corpus.list({ protocol: 'anthropic-messages' }).items[0].id;
+    const response = await fetch(`${flowmock.url}/api/recordings/${id}`, { headers: { authorization: `Bearer ${ADMIN_KEY}` } });
+    const recording = await response.json() as { features: { outputTokens: number | null }; tokensEstimated: boolean; frames: Array<{ content: boolean; contentChars: number; tokens: number }> };
+    const content = recording.frames.filter(frame => frame.content);
+    expect(content.length).toBeGreaterThan(1);
+    expect(recording.frames.filter(frame => !frame.content).every(frame => frame.tokens === 0)).toBe(true);
+    expect(recording.tokensEstimated).toBe(recording.features.outputTokens === null);
+    const total = recording.frames.reduce((sum, frame) => sum + frame.tokens, 0);
+    expect(total).toBeCloseTo(recording.features.outputTokens!, 6);
+    const [first, second] = content;
+    expect(first.tokens / first.contentChars).toBeCloseTo(second.tokens / second.contentChars, 6);
   });
 });

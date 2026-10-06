@@ -12,7 +12,9 @@ import { ConfigError, keyInputSchema, maskHeaders, type StoredScenario, type Tar
 import { FLOWMOCK_VERSION } from '../version.ts';
 import {
   adapterFor,
+  allocateTokens,
   decodeWireFrames,
+  estimateTokens,
   freshSeed,
   listTransforms,
   planReplay,
@@ -94,15 +96,19 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
     const recording = await services.corpus.getRecording(c.req.param('id'));
     if (!recording) return c.json({ error: { code: 'not_found', message: 'recording not found' } }, 404);
     const adapter = adapterFor(recording.protocol);
-    const frames = decodeWireFrames(recording.response.wire, recording.response.chunks).map(frame => {
-      const info = adapter.frameInfo(frame);
-      return { t: frame.t, kind: frame.kind, event: frame.sseEvent ?? null, raw: frame.raw, content: info.content, contentChars: info.contentChars, error: info.error };
-    });
+    const decoded = decodeWireFrames(recording.response.wire, recording.response.chunks).map(frame => ({ frame, info: adapter.frameInfo(frame) }));
+    // The same total the recording's TTFT and TPS were measured with, so a
+    // token curve drawn from these frames agrees with them.
+    const tokensEstimated = recording.features.outputTokens === null;
+    const outputTokens = recording.features.outputTokens ?? estimateTokens(decoded.reduce((sum, { info }) => sum + info.contentChars, 0));
+    const tokens = allocateTokens(decoded.map(({ info }) => info.contentChars), outputTokens);
+    const frames = decoded.map(({ frame, info }, index) => ({ t: frame.t, kind: frame.kind, event: frame.sseEvent ?? null, raw: frame.raw, content: info.content, contentChars: info.contentChars, tokens: tokens[index], error: info.error }));
     const { chunks, ...response } = recording.response;
     return c.json({
       ...recording,
       response: { ...response, chunks: chunks.map(chunk => ({ t: chunk.t, bytes: chunk.bytes.byteLength })) },
       frames,
+      tokensEstimated,
     });
   })
   .get('/recordings/:id/body', async c => {
