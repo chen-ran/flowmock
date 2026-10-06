@@ -8,10 +8,13 @@ const { Tooltip } = fluentComponents;
 
 // One write on a timeline: a recorded frame, or a frame a replay plan writes.
 // Content marks the output a client renders; error marks a frame that reports
-// a failure, which outranks content.
+// a failure, which outranks content. The kind sets a mark's height, and its
+// colour unless the mark names one -- a replayed frame is coloured by where
+// its bytes came from.
 export interface TimelineMark {
   t: number;
   kind: 'content' | 'other' | 'error';
+  color?: string;
   title: string;
   detail: string | null;
 }
@@ -67,7 +70,7 @@ export function FrameTimeline({ durationMs, label, marks }: { durationMs: number
         data-kind={mark.kind}
         data-mark={index}
         data-t={mark.t}
-        fill={markColor[mark.kind]}
+        fill={mark.color ?? markColor[mark.kind]}
         height={markHeight[mark.kind]}
         key={mark.index}
         opacity={hovered === null || hovered.index === index ? 1 : 0.55}

@@ -57,7 +57,7 @@ const recordingsQuery = z.object({
   limit: pageLimit,
   offset: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().nonnegative()).default(0),
 });
-const requestsQuery = z.object({ limit: pageLimit, before: z.string().min(1).optional(), mode: z.enum(['record', 'replay']).optional(), key: z.string().optional(), protocol: z.enum(PROTOCOLS).optional(), outcome: z.string().optional() });
+const requestsQuery = z.object({ limit: pageLimit, before: z.string().min(1).optional(), mode: z.enum(['record', 'replay']).optional(), key: z.string().optional(), protocol: z.enum(PROTOCOLS).optional(), outcome: z.string().optional(), status: z.enum(['2xx', '3xx', '4xx', '5xx']).optional() });
 const deleteRecordingsBody = z.object({ ids: z.array(z.string().min(1)).min(1).max(1000) }).strict();
 
 export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
@@ -226,7 +226,7 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
   .get('/requests/stream', c => requestStream(c, services))
   .get('/requests', queryParams(requestsQuery), c => {
     const query = c.req.valid('query');
-    return c.json({ items: services.timeline.list(query.limit, { before: query.before, mode: query.mode, keyName: query.key, protocol: query.protocol, outcome: query.outcome }) }, 200);
+    return c.json({ items: services.timeline.list(query.limit, { before: query.before, mode: query.mode, keyName: query.key, protocol: query.protocol, outcome: query.outcome, statusClass: query.status === undefined ? undefined : Number(query.status[0]) }) }, 200);
   })
   .get('/requests/:id', c => {
     const entry = services.timeline.get(c.req.param('id'));

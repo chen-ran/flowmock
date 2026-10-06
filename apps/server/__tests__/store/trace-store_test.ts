@@ -32,4 +32,16 @@ describe('TraceStore', () => {
       expect(store.list(10).map(entry => entry.id)).toEqual(['req_3', 'req_2']);
     } finally { db.close(); }
   });
+  it('filters by status class', () => {
+    const db = openDatabase(':memory:');
+    try {
+      const store = new TraceStore(db);
+      store.add(timelineEntry('req_ok', 0, { status: 200 }));
+      store.add(timelineEntry('req_limited', 1, { status: 429 }));
+      store.add(timelineEntry('req_broken', 2, { status: 503 }));
+      store.add(timelineEntry('req_open', 3, { status: null }));
+      expect(store.list(10, { statusClass: 4 }).map(entry => entry.id)).toEqual(['req_limited']);
+      expect(store.list(10, { statusClass: 2 }).map(entry => entry.id)).toEqual(['req_ok']);
+    } finally { db.close(); }
+  });
 });

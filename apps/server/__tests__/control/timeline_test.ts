@@ -38,6 +38,20 @@ describe('persistent request timeline', () => {
     } finally { await running?.close(); await rm(dataDir, { recursive: true, force: true }); }
   });
 
+  it('filters the hot cache by status class', async () => {
+    const dataDir = await mkdtemp(join(tmpdir(), 'flowmock-status-'));
+    const running = await startServer({ dataDir, port: 0 });
+    try {
+      running.services.timeline.add(timelineEntry('req_ok', 1, { status: 200 }));
+      running.services.timeline.add(timelineEntry('req_limited', 2, { status: 429 }));
+      running.services.timeline.add(timelineEntry('req_broken', 3, { status: 503 }));
+      const list = async (query: string) => ((await (await fetch(`${running.url}/api/requests?${query}`)).json()) as { items: Array<{ id: string }> }).items.map(entry => entry.id);
+      expect(await list('status=4xx')).toEqual(['req_limited']);
+      expect(await list('status=5xx')).toEqual(['req_broken']);
+      expect((await fetch(`${running.url}/api/requests?status=429`)).status).toBe(400);
+    } finally { await running.close(); await rm(dataDir, { recursive: true, force: true }); }
+  });
+
   it('leaves persistence off by default', async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'flowmock-no-timeline-'));
     let running = await startServer({ dataDir, port: 0 });

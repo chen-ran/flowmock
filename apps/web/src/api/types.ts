@@ -20,3 +20,5 @@ export type ScenarioDetail = InferResponseType<typeof api.scenarios[':name']['$g
 export type ScenarioPreview = InferResponseType<typeof api.scenarios[':name']['preview']['$post'], 200>;
 export type PreviewPlan = ScenarioPreview['plan'];
 export type PreviewTrace = ScenarioPreview['trace'];
+export type TimelineEntry = InferResponseType<typeof api.requests.$get, 200>['items'][number];
+export type RequestDetail = InferResponseType<typeof api.requests[':id']['$get'], 200>;

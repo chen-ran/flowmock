@@ -2,9 +2,10 @@ import type { PreviewPlan, PreviewTrace } from '../../api/types.ts';
 import { useTranslation } from '../../i18n/translation.ts';
 import { formatDuration } from '../../lib/format-duration.ts';
 import { FrameTimeline, type TimelineMark } from '../corpus/frame-timeline.tsx';
-import { positionOf, TimelineAxis, TimelineLane } from '../corpus/timeline-axis.tsx';
+import { TimelineAxis, TimelineLane } from '../corpus/timeline-axis.tsx';
+import { type LegendItem, momentLegend, MomentLines, TimelineLegend, type TimelineMoment } from '../corpus/timeline-moments.tsx';
 
-// A moment of the plan drawn across the writes lane: when the status line
+// The moments of the plan drawn across the writes lane: when the status line
 // goes out, when the first token is expected, and how the response ends.
 export interface PlanMoment {
   id: 'headers' | 'ttft' | 'end';
@@ -38,38 +39,28 @@ export const planMarks = (plan: PreviewPlan, trace: PreviewTrace, title: (write:
 export function PlanTimeline({ plan, trace }: { plan: PreviewPlan; trace: PreviewTrace }) {
   const { t } = useTranslation();
   const durationMs = planDuration(plan);
-  const moments = planMoments(plan);
   const marks = planMarks(plan, trace, write => t('scenarios.preview.write', { at: formatDuration(write.at), bytes: write.bytes }));
   const kinds = new Set(marks.map(mark => mark.kind));
-  const momentLabel = (moment: PlanMoment) => moment.id === 'end'
-    ? t('scenarios.preview.moments.end', { mode: t(`scenarios.preview.endModes.${plan.end.mode}`), at: formatDuration(moment.t) })
-    : t(`scenarios.preview.moments.${moment.id}`, { at: formatDuration(moment.t) });
+  const moments: TimelineMoment[] = planMoments(plan).map(moment => ({
+    ...moment,
+    label: moment.id === 'end'
+      ? t('scenarios.preview.moments.end', { mode: t(`scenarios.preview.endModes.${plan.end.mode}`), at: formatDuration(moment.t) })
+      : t(`scenarios.preview.moments.${moment.id}`, { at: formatDuration(moment.t) }),
+  }));
+  const legend: LegendItem[] = [
+    ...(kinds.has('content') ? [{ key: 'content', swatch: 'bar' as const, color: 'var(--colorBrandStroke1)', label: t('scenarios.preview.legend.content') }] : []),
+    ...(kinds.has('other') ? [{ key: 'other', swatch: 'bar' as const, color: 'var(--colorNeutralStrokeAccessible)', label: t('scenarios.preview.legend.other') }] : []),
+    ...(kinds.has('error') ? [{ key: 'error', swatch: 'bar' as const, color: 'var(--winui-system-fill-critical)', label: t('scenarios.preview.legend.error') }] : []),
+    ...momentLegend(moments),
+  ];
   return <div className="grid gap-3">
     <div className="grid gap-1">
       <TimelineLane label={t('scenarios.preview.writesLane', { count: plan.writes.length })}>
-        <FrameTimeline
-          durationMs={durationMs}
-          label={t('scenarios.preview.writesLane', { count: plan.writes.length })}
-          marks={marks}
-        />
-        {moments.map(moment => <span
-          aria-hidden="true"
-          className="pointer-events-none absolute top-0 bottom-0 border-l-2 border-l-dashed"
-          data-moment={moment.id}
-          key={moment.id}
-          style={{ left: `${positionOf(moment.t, durationMs)}%`, borderLeftColor: moment.color }}
-        />)}
+        <FrameTimeline durationMs={durationMs} label={t('scenarios.preview.writesLane', { count: plan.writes.length })} marks={marks} />
+        <MomentLines durationMs={durationMs} moments={moments} />
       </TimelineLane>
       <TimelineAxis durationMs={durationMs} />
     </div>
-    <ul aria-label={t('scenarios.preview.momentsLabel')} className="m-0 p-0 list-none flex flex-wrap gap-x-5 gap-y-1 text-fui-base200 text-fui-fg2">
-      {kinds.has('content') && <li className="flex items-center gap-2"><span aria-hidden="true" className="inline-block w-[2px] h-3 bg-[var(--colorBrandStroke1)]" />{t('scenarios.preview.legend.content')}</li>}
-      {kinds.has('other') && <li className="flex items-center gap-2"><span aria-hidden="true" className="inline-block w-[2px] h-2 bg-[var(--colorNeutralStrokeAccessible)]" />{t('scenarios.preview.legend.other')}</li>}
-      {kinds.has('error') && <li className="flex items-center gap-2"><span aria-hidden="true" className="inline-block w-[2px] h-3 bg-[var(--winui-system-fill-critical)]" />{t('scenarios.preview.legend.error')}</li>}
-      {moments.map(moment => <li className="flex items-center gap-2" key={moment.id}>
-        <span aria-hidden="true" className="inline-block h-3 border-l-2 border-l-dashed" style={{ borderLeftColor: moment.color }} />
-        {momentLabel(moment)}
-      </li>)}
-    </ul>
+    <TimelineLegend items={legend} label={t('scenarios.preview.momentsLabel')} />
   </div>;
 }

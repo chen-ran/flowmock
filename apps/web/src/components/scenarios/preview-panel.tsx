@@ -9,13 +9,14 @@ import { useTranslation } from '../../i18n/translation.ts';
 import { formatDuration } from '../../lib/format-duration.ts';
 import { formatTokenRate } from '../../lib/format-number.ts';
 import { NO_READING } from '../../lib/no-reading.ts';
+import { ProvenanceTable } from '../requests/provenance.tsx';
 import { Input } from '@flowmock/ui/controls/fluent-form-controls.tsx';
 import { OutcomeMessageBar } from '@flowmock/ui/controls/outcome-message-bar.tsx';
 import { RouteLink } from '@flowmock/ui/controls/route-link.tsx';
 import { StatusBadge } from '@flowmock/ui/controls/status-badge.tsx';
 import { fluentComponents } from '@flowmock/ui/fluent';
 
-const { Button, Field, MessageBar, MessageBarBody, MessageBarTitle, SpinButton, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, Text } = fluentComponents;
+const { Button, Field, MessageBar, MessageBarBody, MessageBarTitle, SpinButton, Text } = fluentComponents;
 
 function Fact({ children, label }: { children: ReactNode; label: string }) {
   return <div className="grid gap-1 min-w-0">
@@ -68,20 +69,7 @@ function PreviewResult({ result }: { result: ScenarioPreview }) {
       <ul className="m-0 pl-5">{trace.misses.map(miss => <li key={miss}><Text>{miss}</Text></li>)}</ul>
     </div>}
     {plan.writes.length > 0 && <PlanTimeline plan={plan} trace={trace} />}
-    {trace.provenance.length > 0 && <Table aria-label={t('scenarios.preview.provenance')} size="small">
-      <TableHeader>
-        <TableRow>
-          <TableHeaderCell className="w-[180px]">{t('scenarios.preview.transform')}</TableHeaderCell>
-          <TableHeaderCell>{t('scenarios.preview.change')}</TableHeaderCell>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {trace.provenance.map((entry, index) => <TableRow key={index}>
-          <TableCell><span className="font-mono">{entry.transform}</span></TableCell>
-          <TableCell><span className="break-words">{entry.detail}</span></TableCell>
-        </TableRow>)}
-      </TableBody>
-    </Table>}
+    {trace.provenance.length > 0 && <ProvenanceTable entries={trace.provenance} />}
   </div>;
 }
 

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { getSessionToken } from '../../auth/session.ts';
+import { type EventSourceFactory, type StreamStatus, useServerEvents } from '../../lib/use-server-events.ts';
 
 interface Quantiles { p50: number | null; p90: number | null; p99: number | null }
 
@@ -26,84 +26,17 @@ export const trimWindow = (snapshots: readonly LiveSnapshot[], windowMs = LIVE_W
   return newest === undefined ? [] : snapshots.filter(item => item.at >= newest - windowMs);
 };
 
-const MAX_RECONNECT_DELAY_MS = 30_000;
-
-export const reconnectDelay = (attempt: number): number => Math.min(MAX_RECONNECT_DELAY_MS, 1000 * 2 ** attempt);
-
-export type LiveStatus = 'connecting' | 'live' | 'reconnecting' | 'paused';
-
 export interface LiveState {
   snapshots: readonly LiveSnapshot[];
-  status: LiveStatus;
+  status: StreamStatus;
 }
 
-// EventSource sends no custom header, so the browser's admin session rides in
-// the query, which the server accepts on its two stream routes alone.
-const liveUrl = () => {
-  const token = getSessionToken();
-  return token === null ? '/api/live' : `/api/live?session=${encodeURIComponent(token)}`;
-};
-
-// Follows the live snapshots while the tab is shown. A dropped stream is
-// reopened after a wait that doubles with every failure in a row, and a hidden
-// tab holds no stream at all: it resumes, from a fresh connection, when shown.
-export const useLive = ({ createSource = url => new EventSource(url) }: { createSource?: (url: string) => EventSource } = {}): LiveState => {
+// Follows the live snapshots while the tab is shown.
+export const useLive = ({ createSource }: { createSource?: EventSourceFactory } = {}): LiveState => {
   const [snapshots, setSnapshots] = useState<LiveSnapshot[]>([]);
-  const [status, setStatus] = useState<LiveStatus>(() => (document.visibilityState === 'visible' ? 'connecting' : 'paused'));
-  const createSourceRef = useRef(createSource);
-
-  useEffect(() => {
-    let source: EventSource | null = null;
-    let retry: number | undefined;
-    let failures = 0;
-
-    const close = () => {
-      source?.close();
-      source = null;
-      window.clearTimeout(retry);
-      retry = undefined;
-    };
-
-    const connect = () => {
-      close();
-      const opened = createSourceRef.current(liveUrl());
-      source = opened;
-      opened.addEventListener('open', () => {
-        failures = 0;
-        setStatus('live');
-      });
-      opened.addEventListener('snapshot', event => {
-        const snapshot = JSON.parse((event as MessageEvent<string>).data) as LiveSnapshot;
-        setStatus('live');
-        setSnapshots(previous => trimWindow([...previous, snapshot]));
-      });
-      // EventSource retries on its own at a fixed pace; it is closed instead,
-      // so the wait can grow.
-      opened.addEventListener('error', () => {
-        close();
-        setStatus('reconnecting');
-        retry = window.setTimeout(connect, reconnectDelay(failures++));
-      });
-    };
-
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        failures = 0;
-        setStatus('connecting');
-        connect();
-      } else {
-        close();
-        setStatus('paused');
-      }
-    };
-
-    if (document.visibilityState === 'visible') connect();
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      close();
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
+  const onEvent = useCallback((data: string) => {
+    setSnapshots(previous => trimWindow([...previous, JSON.parse(data) as LiveSnapshot]));
   }, []);
-
+  const status = useServerEvents({ createSource, event: 'snapshot', onEvent, path: '/api/live' });
   return { snapshots, status };
 };

@@ -1,6 +1,17 @@
 import type { ReplayTrace, RunResult } from '@flowmock/core';
 
-export interface TimelineFilter { mode?: string; keyName?: string; protocol?: string; outcome?: string; before?: string }
+export interface TimelineFilter {
+  mode?: string;
+  keyName?: string;
+  protocol?: string;
+  outcome?: string;
+  // The status's leading digit: 4 for any 4xx.
+  statusClass?: number;
+  before?: string;
+}
+
+const inStatusClass = (status: number | null, statusClass: number | undefined) =>
+  statusClass === undefined || (status !== null && Math.floor(status / 100) === statusClass);
 export interface TimelineBackend {
   add(entry: TimelineEntry): void;
   list(limit: number, filter: TimelineFilter): TimelineEntry[];
@@ -38,7 +49,9 @@ export const summary = (entry: TimelineEntry) => ({
   keyName: entry.keyName,
   protocol: entry.protocol,
   transport: entry.transport,
+  model: entry.model,
   status: entry.status,
+  durationMs: entry.durationMs,
   outcome: entry.outcome,
   recordingId: entry.recordingId,
   achievedTtftMs: entry.result?.achievedTtftMs ?? null,
@@ -77,7 +90,8 @@ export class Timeline {
       && (filter.mode === undefined || entry.mode === filter.mode)
       && (filter.keyName === undefined || entry.keyName === filter.keyName)
       && (filter.protocol === undefined || entry.protocol === filter.protocol)
-      && (filter.outcome === undefined || entry.outcome === filter.outcome)).slice(0, limit);
+      && (filter.outcome === undefined || entry.outcome === filter.outcome)
+      && inStatusClass(entry.status, filter.statusClass)).slice(0, limit);
   }
 
   get(id: string): TimelineEntry | null {

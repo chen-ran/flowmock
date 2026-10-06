@@ -32,6 +32,10 @@ export class TraceStore {
     for (const [key, column] of [['mode', 'mode'], ['keyName', 'key_name'], ['protocol', 'protocol'], ['outcome', 'outcome']] as const) {
       if (filter[key] !== undefined) { clauses.push(`${column} = ?`); values.push(filter[key]); }
     }
+    if (filter.statusClass !== undefined) {
+      clauses.push('status >= ? AND status < ?');
+      values.push(filter.statusClass * 100, filter.statusClass * 100 + 100);
+    }
     if (filter.before !== undefined) {
       const cursor = this.db.prepare('SELECT started_at FROM request_traces WHERE id = ?').get(filter.before) as { started_at: number } | undefined;
       if (!cursor) return [];

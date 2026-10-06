@@ -4,8 +4,9 @@ import { SummaryCards } from '../components/monitor/summary-cards.tsx';
 import { ThroughputChart } from '../components/monitor/throughput-chart.tsx';
 import { TpsChart } from '../components/monitor/tps-chart.tsx';
 import { TtftChart } from '../components/monitor/ttft-chart.tsx';
-import { type LiveStatus, useLive } from '../components/monitor/use-live.ts';
+import { useLive } from '../components/monitor/use-live.ts';
 import { useTranslation } from '../i18n/translation.ts';
+import type { StreamStatus } from '../lib/use-server-events.ts';
 import { DashboardPageHeader } from '@flowmock/ui/controls/dashboard-page-header.tsx';
 import { Panel } from '@flowmock/ui/controls/panel.tsx';
 import { StatusBadge } from '@flowmock/ui/controls/status-badge.tsx';
@@ -18,7 +19,7 @@ export async function clientLoader() {
   return null;
 }
 
-const STATUS_TONES = { connecting: 'neutral', live: 'success', reconnecting: 'warning', paused: 'neutral' } as const satisfies Record<LiveStatus, string>;
+const STATUS_TONES = { connecting: 'neutral', live: 'success', reconnecting: 'warning', paused: 'neutral' } as const satisfies Record<StreamStatus, string>;
 
 export default function Monitor() {
   const { t } = useTranslation();

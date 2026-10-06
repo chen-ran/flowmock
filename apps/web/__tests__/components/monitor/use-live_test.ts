@@ -2,7 +2,8 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setSessionToken } from '../../../src/auth/session.ts';
-import { type LiveSnapshot, reconnectDelay, trimWindow, useLive } from '../../../src/components/monitor/use-live.ts';
+import { type LiveSnapshot, trimWindow, useLive } from '../../../src/components/monitor/use-live.ts';
+import { reconnectDelay } from '../../../src/lib/use-server-events.ts';
 
 // A stand-in EventSource the suite drives: it records what was opened and
 // closed, and delivers events when told to.

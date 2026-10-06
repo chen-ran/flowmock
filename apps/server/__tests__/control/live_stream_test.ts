@@ -50,6 +50,7 @@ describe('live SSE', () => {
       expect(text).toContain('event: request');
       const data = JSON.parse(text.split('data: ')[1].split('\n')[0]) as Record<string, unknown>;
       expect(data.id).toBe(id);
+      expect(data).toMatchObject({ model: expect.any(String), durationMs: expect.any(Number) });
       expect(data).not.toHaveProperty('trace');
       expect(data).not.toHaveProperty('path');
     } finally { abort.abort(); }

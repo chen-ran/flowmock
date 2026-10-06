@@ -13,6 +13,8 @@ export default [
     route('scenarios/:name', 'routes/scenario-editor.tsx'),
     route('keys', 'routes/keys.tsx'),
     route('monitor', 'routes/monitor.tsx'),
+    route('requests', 'routes/requests.tsx'),
+    route('requests/:id', 'routes/request-detail.tsx'),
     route('settings', 'routes/settings.tsx'),
   ]),
 ] satisfies RouteConfig;
