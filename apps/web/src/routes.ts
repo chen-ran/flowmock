@@ -6,6 +6,8 @@ export default [
     index('routes/index.tsx'),
     route('corpus', 'routes/corpus.tsx'),
     route('corpus/:id', 'routes/corpus-detail.tsx'),
+    route('cassettes', 'routes/cassettes.tsx'),
+    route('cassettes/:id', 'routes/cassette-detail.tsx'),
     route('settings', 'routes/settings.tsx'),
   ]),
 ] satisfies RouteConfig;

@@ -9,3 +9,6 @@ export type RecordingSummary = RecordingList['items'][number];
 export type RecordingDetail = InferResponseType<typeof api.recordings[':id']['$get'], 200>;
 export type RecordingFrame = RecordingDetail['frames'][number];
 export type RecordedChunkSummary = RecordingDetail['response']['chunks'][number];
+
+export type CassetteSummary = InferResponseType<typeof api.cassettes.$get, 200>['items'][number];
+export type CassetteDetail = InferResponseType<typeof api.cassettes[':id']['$get'], 200>;

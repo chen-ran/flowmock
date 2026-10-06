@@ -50,6 +50,8 @@ import { fluentComponents } from '../fluent.ts';
 
 const {
   Button,
+  DialogActions,
+  DialogTitle,
   Field,
   Menu,
   MenuList,
@@ -244,7 +246,7 @@ function GuardedDialog({ onClose, open }: { onClose: () => void; open: boolean }
   const [name, setName] = useState('demo');
   const { discardConfirmation, requestClose } = useDiscardGuard({ onClose, values: { name } });
   return <>
-    <DialogShell actions={<><Button onClick={requestClose}>Cancel</Button><Button appearance="primary" onClick={onClose}>Save</Button></>} onOpenChange={(_, data) => { if (!data.open) requestClose(); }} open={open} title="Edit the scenario">
+    <DialogShell actions={<DialogActions><Button onClick={requestClose}>Cancel</Button><Button appearance="primary" onClick={onClose}>Save</Button></DialogActions>} onOpenChange={(_, data) => { if (!data.open) requestClose(); }} open={open} title={<DialogTitle>Edit the scenario</DialogTitle>}>
       <Field label="Name"><Input onChange={(_, data) => setName(data.value)} value={name} /></Field>
       <Hint>Change the name, then cancel: the discard guard asks first.</Hint>
     </DialogShell>

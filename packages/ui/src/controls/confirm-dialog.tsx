@@ -1,4 +1,6 @@
 // Ported from Floway apps/web/src/components/ui/confirm-dialog.tsx (MIT). See NOTICE.md.
+import type { ReactNode } from 'react';
+
 import { DialogShell } from './dialog-shell.tsx';
 import { OutcomeMessageBar } from './outcome-message-bar.tsx';
 import { fluentComponents } from '../fluent.ts';
@@ -39,6 +41,7 @@ const useStyles = makeStyles({
 
 export function ConfirmDialog({
   actionIntent = 'danger',
+  children,
   actionLabel,
   busy = false,
   cancelLabel,
@@ -53,6 +56,8 @@ export function ConfirmDialog({
   title,
 }: {
   actionIntent?: 'danger' | 'primary';
+  /** What the action can be qualified by, beneath the message -- an option it takes. */
+  children?: ReactNode;
   actionLabel: string;
   busy?: boolean;
   cancelLabel?: string;
@@ -100,6 +105,7 @@ export function ConfirmDialog({
     >
       <div className="grid gap-3 min-w-0">
         <span>{message}</span>
+        {children}
         {error && <OutcomeMessageBar onDismiss={onDismissError}>{error}</OutcomeMessageBar>}
       </div>
     </DialogShell>

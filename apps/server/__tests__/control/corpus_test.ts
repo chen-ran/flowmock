@@ -107,4 +107,18 @@ describe('corpus management', () => {
     const [first, second] = content;
     expect(first.tokens / first.contentChars).toBeCloseTo(second.tokens / second.contentChars, 6);
   });
+
+  it('deletes a cassette alone by default, and with its recordings on request', async () => {
+    const auth = { authorization: `Bearer ${ADMIN_KEY}` };
+    const keep = flowmock.services.corpus.createCassette({ name: 'keep' });
+    const drop = flowmock.services.corpus.createCassette({ name: 'drop' });
+    const kept = await seedFixture(flowmock.services, anthropicText, { cassetteId: keep.id, seq: 1 });
+    const dropped = await seedFixture(flowmock.services, chatText, { cassetteId: drop.id, seq: 1 });
+
+    expect((await fetch(`${flowmock.url}/api/cassettes/${keep.id}?recordings=maybe`, { method: 'DELETE', headers: auth })).status).toBe(400);
+    expect((await fetch(`${flowmock.url}/api/cassettes/${keep.id}`, { method: 'DELETE', headers: auth })).status).toBe(204);
+    expect(await flowmock.services.corpus.getRecording(kept.id)).not.toBeNull();
+    expect((await fetch(`${flowmock.url}/api/cassettes/${drop.id}?recordings=true`, { method: 'DELETE', headers: auth })).status).toBe(204);
+    expect(await flowmock.services.corpus.getRecording(dropped.id)).toBeNull();
+  });
 });

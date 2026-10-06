@@ -44,6 +44,9 @@ const cassettePatchSchema = z.object({
   closed: z.boolean().optional(),
 }).strict();
 
+// Whether deleting a cassette also deletes the recordings it holds.
+const cassetteDeleteQuery = z.object({ recordings: z.enum(['true', 'false']).default('false') });
+
 const MAX_PREVIEW_TEXT = 4096;
 
 const pageLimit = z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(1000)).default(100);
@@ -132,7 +135,7 @@ export const controlRoutes = (services: Services) => new Hono<AdminEnv>()
     const cassette = services.corpus.updateCassette(c.req.param('id'), patch);
     return cassette ? c.json(cassette) : c.json({ error: { code: 'not_found', message: 'cassette not found' } }, 404);
   })
-  .delete('/cassettes/:id', async c => (await services.corpus.deleteCassette(c.req.param('id'), c.req.query('recordings') === 'true') ? c.body(null, 204) : c.json({ error: { code: 'not_found', message: 'cassette not found' } }, 404)))
+  .delete('/cassettes/:id', queryParams(cassetteDeleteQuery), async c => (await services.corpus.deleteCassette(c.req.param('id'), c.req.valid('query').recordings === 'true') ? c.body(null, 204) : c.json({ error: { code: 'not_found', message: 'cassette not found' } }, 404)))
 
 // ── Scenarios ──
 
