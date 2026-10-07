@@ -455,7 +455,10 @@ const en = {
       },
       replaySnippet: {
         title: 'Replay with this seed',
-        description: 'Send the original body, saved as request.json, under the same scenario, seed and session. It replays this run as call {{callIndex, count}} of the session, so reset the scenario\'s sessions and repeat the calls before it.',
+        description: 'Download the request body as request.json and send it under the same scenario, seed and session. It is the recorded request this replay matched exactly, with this request\'s model and streaming choice. It replays this run as call {{callIndex, count}} of the session, so reset the scenario\'s sessions and repeat the calls before it.',
+        descriptionWithoutBody: 'The trace keeps no request body, and this replay matched no recording exactly, so send the original body yourself, saved as request.json, under the same scenario, seed and session. It replays this run as call {{callIndex, count}} of the session, so reset the scenario\'s sessions and repeat the calls before it.',
+        download: 'Download request.json',
+        downloadFailed: 'The request body could not be downloaded',
       },
     },
     scenarios: {

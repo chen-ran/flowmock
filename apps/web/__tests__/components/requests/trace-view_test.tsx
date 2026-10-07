@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import type { RequestDetail } from '../../../src/api/types.ts';
-import { replayCurl } from '../../../src/components/requests/replay-snippet.ts';
+import { replayBody, replayCurl } from '../../../src/components/requests/replay-snippet.ts';
 import { timingRows } from '../../../src/components/requests/timing-compare.tsx';
 import { ORIGIN_COLORS, traceDuration, traceMarks, TraceView } from '../../../src/components/requests/trace-view.tsx';
 import { renderInApp } from '../../render.tsx';
@@ -71,5 +71,30 @@ describe('the replay snippet', () => {
     ].join('\n'));
     expect(replayCurl('http://h', { path: '/v1/chat/completions', protocol: 'openai-chat-completions', trace })).toContain('-H "authorization: Bearer $FLOWMOCK_KEY"');
     expect(replayCurl('http://h', { path: '/v1/messages', protocol: 'anthropic-messages', trace: null })).toBeNull();
+  });
+});
+
+describe('the replay body', () => {
+  const exact = { ...trace, selection: { mode: 'exact', candidates: 1 } } as unknown as Trace;
+  const recorded = { model: 'claude-sonnet-4-5', stream: true, max_tokens: 256, messages: [{ role: 'user', content: 'Hello' }] };
+
+  it('takes an exact match\'s recorded request with this request\'s model', () => {
+    expect(replayBody({ protocol: 'anthropic-messages', model: 'claude-opus-4-1', trace: exact }, recorded)).toEqual({ ...recorded, model: 'claude-opus-4-1' });
+  });
+
+  it('asks for one body when the replay collected a stream into one', () => {
+    const collected = { ...exact, frames: [frame(10, 'collected', true)] } as Trace;
+    expect(replayBody({ protocol: 'openai-chat-completions', model: 'gpt-4.1', trace: collected }, recorded)).toEqual({ ...recorded, model: 'gpt-4.1', stream: false });
+  });
+
+  it('leaves a Gemini body alone, whose model and streaming live in the path', () => {
+    const gemini = { contents: [{ role: 'user', parts: [{ text: 'Hello' }] }] };
+    expect(replayBody({ protocol: 'gemini-generate-content', model: 'gemini-2.5-flash', trace: exact }, gemini)).toEqual(gemini);
+  });
+
+  it('offers no body unless the replay matched its recording exactly', () => {
+    const sampled = { ...trace, selection: { mode: 'sample', candidates: 3, score: 1 } } as unknown as Trace;
+    expect(replayBody({ protocol: 'anthropic-messages', model: 'claude-sonnet-4-5', trace: sampled }, recorded)).toBeNull();
+    expect(replayBody({ protocol: 'anthropic-messages', model: 'claude-sonnet-4-5', trace: null }, recorded)).toBeNull();
   });
 });

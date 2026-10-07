@@ -32,3 +32,22 @@ export const replayCurl = (origin: string, entry: Pick<RequestDetail, 'path' | '
   ].filter((header): header is string => header !== undefined);
   return [`curl ${origin}${entry.path} \\`, ...headers.map(header => `  -H ${quoted(header)} \\`), '  --data @request.json'].join('\n');
 };
+
+// Protocols whose body names the model and the streaming choice. Gemini
+// carries both in the path, which the trace keeps as the client sent it.
+// https://ai.google.dev/api/generate-content#method:-models.streamgeneratecontent
+const BODY_CARRIES_MODEL: ReadonlySet<string> = new Set(['anthropic-messages', 'openai-chat-completions', 'openai-responses']);
+
+// The body an exact match is replayed with. The trace keeps no request body,
+// but an exact match names a recording of the same conversation; the
+// fingerprint leaves out the model and the streaming choice, and both change
+// the plan, so they are put back to this request's. A frame collected from a
+// recorded stream means this request asked for one JSON body.
+export const replayBody = (entry: Pick<RequestDetail, 'model' | 'protocol' | 'trace'>, recordedBody: unknown): unknown => {
+  if (entry.trace?.selection?.mode !== 'exact' || typeof recordedBody !== 'object' || recordedBody === null) return null;
+  if (!BODY_CARRIES_MODEL.has(entry.protocol)) return recordedBody;
+  const body: Record<string, unknown> = { ...recordedBody };
+  if (entry.model !== null) body.model = entry.model;
+  if (entry.trace.frames.some(frame => frame.origin === 'collected')) body.stream = false;
+  return body;
+};

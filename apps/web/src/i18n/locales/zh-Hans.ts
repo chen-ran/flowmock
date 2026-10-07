@@ -445,7 +445,10 @@ const zhHans = {
       },
       replaySnippet: {
         title: '用此种子重放',
-        description: '以同一场景、种子和会话发送原始请求体（保存为 request.json）。它会作为会话的第 {{callIndex, count}} 次调用重放本次运行，因此请先重置该场景的会话，并重复之前的调用。',
+        description: '下载请求体（request.json），以同一场景、种子和会话发送。它取自本次回放精确匹配的录制请求，model 和 stream 已改回本次请求的取值。它会作为会话的第 {{callIndex, count}} 次调用重放本次运行，因此请先重置该场景的会话，并重复之前的调用。',
+        descriptionWithoutBody: '追踪不保存请求体，本次回放也没有精确匹配到录制，请自行把原始请求体保存为 request.json，以同一场景、种子和会话发送。它会作为会话的第 {{callIndex, count}} 次调用重放本次运行，因此请先重置该场景的会话，并重复之前的调用。',
+        download: '下载 request.json',
+        downloadFailed: '无法下载请求体',
       },
     },
     scenarios: {

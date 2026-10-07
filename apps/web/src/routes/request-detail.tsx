@@ -1,14 +1,15 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { type ClientLoaderFunctionArgs, data, useLoaderData } from 'react-router';
 
 import { requireAccess } from './guards.ts';
 import { api, callApi } from '../api/client.ts';
 import { ProvenanceTable } from '../components/requests/provenance.tsx';
-import { replayCurl } from '../components/requests/replay-snippet.ts';
+import { replayBody, replayCurl } from '../components/requests/replay-snippet.ts';
 import { TimingCompare } from '../components/requests/timing-compare.tsx';
 import { TraceView } from '../components/requests/trace-view.tsx';
 import { selectionText } from '../components/scenarios/preview-panel.tsx';
 import { useTranslation } from '../i18n/translation.ts';
+import { saveJson } from '../lib/download.ts';
 import { formatDuration } from '../lib/format-duration.ts';
 import { dateTime } from '../lib/format-time.ts';
 import { NO_READING } from '../lib/no-reading.ts';
@@ -26,7 +27,7 @@ import { StatusBadge } from '@flowmock/ui/controls/status-badge.tsx';
 import { useCopyToClipboard } from '@flowmock/ui/controls/use-copy-to-clipboard.ts';
 import { fluentComponents } from '@flowmock/ui/fluent';
 
-const { Text } = fluentComponents;
+const { Button, Text } = fluentComponents;
 
 export async function clientLoader({ params }: Pick<ClientLoaderFunctionArgs, 'params'>) {
   await requireAccess();
@@ -52,6 +53,20 @@ export default function RequestDetailPage() {
   const trace = entry.trace;
   const curl = replayCurl(window.location.origin, entry);
   const copy = useCopyToClipboard();
+  const [bodyError, setBodyError] = useState<string | null>(null);
+  // Only an exact match names a recording of this very conversation.
+  const bodyAvailable = trace?.selection?.mode === 'exact' && entry.recordingId !== null;
+
+  const downloadBody = async () => {
+    if (entry.recordingId === null) return;
+    const result = await callApi(() => api.recordings[':id'].$get({ param: { id: entry.recordingId! } }));
+    if (result.error) {
+      setBodyError(result.error.message);
+      return;
+    }
+    setBodyError(null);
+    saveJson(replayBody(entry, result.data.request.body), 'request.json');
+  };
 
   return <section className="dashboard-page">
     <div><BackNavigationButton to="/requests">{t('nav.requests')}</BackNavigationButton></div>
@@ -108,7 +123,13 @@ export default function RequestDetailPage() {
     </div>}
 
     {trace && curl && <div className={PANEL_STACK_CLASS}>
-      <SectionHeader description={t('requests.replaySnippet.description', { callIndex: trace.callIndex })} level={2} title={t('requests.replaySnippet.title')} />
+      <SectionHeader
+        actions={bodyAvailable ? <Button onClick={() => void downloadBody()}>{t('requests.replaySnippet.download')}</Button> : undefined}
+        description={t(bodyAvailable ? 'requests.replaySnippet.description' : 'requests.replaySnippet.descriptionWithoutBody', { callIndex: trace.callIndex })}
+        level={2}
+        title={t('requests.replaySnippet.title')}
+      />
+      {bodyError && <OutcomeMessageBar onDismiss={() => setBodyError(null)} title={t('requests.replaySnippet.downloadFailed')}>{bodyError}</OutcomeMessageBar>}
       <CodeBlock code={curl} copyOutcome={copy.outcomeFor('curl')} language="bash" onCopy={() => copy.copy(curl, 'curl')} />
     </div>}
   </section>;
