@@ -2,6 +2,8 @@
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker.js?worker';
 import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker.js?worker';
 
+import { ignoreMonacoCancellations } from './monaco-cancellation.ts';
+
 const workers = new Map<string, () => Worker>([
   ['json', () => new JsonWorker()],
 ]);
@@ -15,3 +17,7 @@ const workers = new Map<string, () => Worker>([
 export const registerMonacoWorker = (label: string, create: () => Worker): void => {
   workers.set(label, create);
 };
+
+// Every editor reaches Monaco through here, so the cancellations editors leave
+// behind are dropped once, for all of them.
+ignoreMonacoCancellations(window);
