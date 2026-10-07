@@ -3,7 +3,6 @@ import { type ClientLoaderFunctionArgs, data, useLoaderData } from 'react-router
 
 import { requireAccess } from './guards.ts';
 import { api, callApi } from '../api/client.ts';
-import { statusTone } from '../components/requests/list.tsx';
 import { ProvenanceTable } from '../components/requests/provenance.tsx';
 import { replayCurl } from '../components/requests/replay-snippet.ts';
 import { TimingCompare } from '../components/requests/timing-compare.tsx';
@@ -13,7 +12,7 @@ import { useTranslation } from '../i18n/translation.ts';
 import { formatDuration } from '../lib/format-duration.ts';
 import { dateTime } from '../lib/format-time.ts';
 import { NO_READING } from '../lib/no-reading.ts';
-import { outcomeTone } from '../lib/outcome.ts';
+import { requestOutcomeTone, statusTone } from '../lib/outcome.ts';
 import { useLocale } from '../lib/use-locale.ts';
 import { BackNavigationButton } from '@flowmock/ui/controls/back-navigation-button.tsx';
 import { CodeBlock } from '@flowmock/ui/controls/code-block.tsx';
@@ -65,7 +64,7 @@ export default function RequestDetailPage() {
         <Fact label={t('requests.list.key')}><Text>{entry.keyName}</Text></Fact>
         <Fact label={t('requests.detail.protocol')}><Text>{`${entry.protocol} · ${entry.transport}`}</Text></Fact>
         <Fact label={t('requests.list.status')}>{entry.status === null ? <Text>{NO_READING}</Text> : <StatusBadge tone={statusTone(entry.status)}>{entry.status}</StatusBadge>}</Fact>
-        <Fact label={t('requests.list.outcome')}>{entry.outcome === null ? <Text>{NO_READING}</Text> : <StatusBadge tone={outcomeTone(entry.outcome)}>{entry.outcome}</StatusBadge>}</Fact>
+        <Fact label={t('requests.list.outcome')}>{entry.outcome === null ? <Text>{NO_READING}</Text> : <StatusBadge tone={requestOutcomeTone(entry.outcome, entry.status)}>{entry.outcome}</StatusBadge>}</Fact>
         <Fact label={t('requests.detail.duration')}><Text>{formatDuration(entry.durationMs)}</Text></Fact>
         <Fact label={t('requests.detail.recording')}>{entry.recordingId === null
           ? <Text>{NO_READING}</Text>
