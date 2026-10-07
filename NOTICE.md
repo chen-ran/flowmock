@@ -58,7 +58,7 @@ Every ported file names its origin in a header comment. The ports are:
 | `packages/ui/src/assets/fonts/*` | `apps/web/src/assets/fonts/*` | Unchanged; see Meslo LG below. |
 | `packages/ui/__tests__/vite/stylesheet-composition_test.ts` | `apps/web/__tests__/stylesheet-composition_test.ts` | Paths only. |
 | `packages/ui/src/i18n/translation.tsx` | `apps/web/src/i18n/translation.tsx` | Generic over the app's English translation through `createTranslation`, merged with the package's `ui` namespace. |
-| `packages/ui/src/i18n/init.ts` | `apps/web/src/i18n/index.ts` | `initI18n` takes the app's locale loader and shell, merges the `ui` strings into every bundle and returns `setLanguage`. |
+| `packages/ui/src/i18n/init.ts` | `apps/web/src/i18n/index.ts` | `initI18n` takes the app's locale loader and shell, merges the `ui` strings into every bundle, returns `setLanguage`, and initializes the instance again when the app's module reloads, registering its plugins once. |
 | `packages/ui/src/i18n/{languages,number-format,resources}.ts`, `packages/ui/src/lib/format-number.ts` | `apps/web/src/i18n/*`, `apps/web/src/lib/format-number.ts` | `resources.ts` loads the `ui` locales; `format-number.ts` keeps the three interpolation formats. |
 | `packages/ui/src/i18n/language-preference.ts` | `apps/web/src/i18n/language-preference.ts` | Storage key `flowmock-language`. |
 | `packages/ui/src/i18n/parity.ts` | `apps/web/__tests__/i18n/{keys,resources_test}.ts` | The resource checks as one reusable `assertLocaleParity`. |

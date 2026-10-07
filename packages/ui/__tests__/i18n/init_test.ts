@@ -57,7 +57,19 @@ describe('initI18n', () => {
     expect(() => i18n.t('page.bare', { size: 2048 })).toThrow(/names no format/);
   });
 
-  it('refuses to initialize twice', async () => {
-    await expect(initI18n({ instance, loadLocale: async () => await Promise.resolve(appLocales.en), shell: {} })).rejects.toThrow(/once/);
+  // A module reload in development evaluates the app's i18n module again
+  // against the instance it already initialized.
+  it('initializes again with the bundles a reloaded module brings', async () => {
+    const reloaded = { translation: { ...appLocales.en.translation, page: { title: 'Recordings, reloaded' } } };
+    const again = await initI18n({ instance, loadLocale: async () => await Promise.resolve(reloaded), shell: { translation: { common: { loading: 'Loading…' } } } });
+
+    expect(again.i18n).toBe(instance);
+    expect(instance.t('page.title')).toBe('Recordings, reloaded');
+    expect(instance.t('ui.common.cancel')).toBe('Cancel');
+    expect(instance.t('page.bytes', { size: 1536 })).toBe('page.bytes');
+    instance.addResource('en', 'translation', 'page.bytes', '{{size, bytes}}');
+    expect(instance.t('page.bytes', { size: 1536 })).toBe('1.5 KB');
+    await again.setLanguage('zh-Hans');
+    expect(document.documentElement.lang).toBe('zh-Hans');
   });
 });

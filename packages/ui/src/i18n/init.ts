@@ -42,9 +42,15 @@ export interface I18nRuntime {
 //
 // Every bundle is the app's merged with this package's ui namespace, so the
 // controls resolve their own strings from the same instance.
+//
+// A module reload in development -- Vite's, in the browser and in the dev
+// server that prerenders the document -- evaluates the app's i18n module again
+// against the instance it already initialized. A second call initializes that
+// instance again with the bundles the reloaded module brings, registering its
+// plugins and listener only the first time.
 export const initI18n = async ({ loadLocale, shell, instance = i18next }: InitI18nOptions): Promise<I18nRuntime> => {
   const i18n = instance;
-  if (i18n.isInitialized) throw new Error('initI18n runs once per document.');
+  const first = !i18n.isInitialized;
 
   const loadBundle = async (language: SupportedLanguage): Promise<Resource[string]> => {
     const [app, ui] = await Promise.all([loadLocale(language), loadUiLocale(language)]);
@@ -54,7 +60,8 @@ export const initI18n = async ({ loadLocale, shell, instance = i18next }: InitI1
   const language = storedLanguage() ?? browserLanguage();
   const loaded = new Set<SupportedLanguage>([language]);
 
-  await i18n.use(numberFormatter).use(initReactI18next).init({
+  if (first) i18n.use(numberFormatter).use(initReactI18next);
+  await i18n.init({
     resources: { [defaultLanguage]: shell, [language]: await loadBundle(language) },
     lng: defaultLanguage,
     fallbackLng: language,
@@ -65,11 +72,13 @@ export const initI18n = async ({ loadLocale, shell, instance = i18next }: InitI1
     },
   });
 
-  i18n.on('languageChanged', language => {
-    if (typeof window !== 'undefined') {
-      window.document.documentElement.lang = htmlLanguageFor(language);
-    }
-  });
+  if (first) {
+    i18n.on('languageChanged', language => {
+      if (typeof window !== 'undefined') {
+        window.document.documentElement.lang = htmlLanguageFor(language);
+      }
+    });
+  }
 
   // The way the app changes language. A bare changeLanguage would reach a
   // language whose bundle was never fetched, and the default language is
