@@ -26,7 +26,9 @@ export class CassetteTracker {
     let current = this.open.get(slot);
     const closed = current ? this.corpus.cassette(current.id)?.closedAt != null : false;
     if (!current || closed || now - current.lastActivity > this.idleMs) {
-      const stamp = new Date(now).toISOString().replace('T', ' ').slice(0, 19);
+      // The server cannot know the reader's zone, so the name says which one
+      // it is in.
+      const stamp = `${new Date(now).toISOString().replace('T', ' ').slice(0, 19)} UTC`;
       const cassette = this.corpus.createCassette({ name: `${input.keyName} ${stamp}`, keyName: input.keyName, targetId: input.targetId, sessionId: input.sessionId }, now);
       current = { id: cassette.id, nextSeq: 1, lastActivity: now };
       this.open.set(slot, current);
