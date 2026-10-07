@@ -56,9 +56,15 @@ export class NodeHttpTransport implements HttpTransport {
     this.response.socket?.end();
   }
 
+  // A reset destroys the socket and whatever Node still buffers with it, which
+  // would cut the body before bytes the plan wrote. So the RST waits until
+  // Node has handed every written byte to the kernel.
+  // https://nodejs.org/api/net.html#socketresetanddestroy
   reset(): void {
     this.settled = true;
     const socket = this.response.socket;
-    if (socket && !socket.destroyed) socket.resetAndDestroy();
+    if (!socket || socket.destroyed) return;
+    if (socket.writableLength === 0) socket.resetAndDestroy();
+    else socket.write('', () => { if (!socket.destroyed) socket.resetAndDestroy(); });
   }
 }

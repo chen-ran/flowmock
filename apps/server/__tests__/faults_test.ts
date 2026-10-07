@@ -38,13 +38,30 @@ describe('connection faults on real sockets', () => {
     faults: [{ inject: { type: 'interrupt', at: { fraction: 0.5 }, mode, ...extra } }],
   });
 
-  it('resets the connection mid-stream', async () => {
+  // The bytes the client read, against the body bytes the replay says it wrote.
+  const delivered = async (response: Response) => {
+    const { text, error } = await readTimed(response);
+    const entry = flowmock.services.timeline.get(response.headers.get('x-flowmock-request-id')!);
+    return { text, error, received: new TextEncoder().encode(text).byteLength, written: entry?.result?.bytesWritten };
+  };
+
+  it('resets the connection mid-stream, after every byte written before the cut', async () => {
     const response = await anthropicRequest(useScenario('fm-fault-reset', interrupt('reset')));
     expect(response.status).toBe(200);
-    const { text, error } = await readTimed(response);
+    const { text, error, received, written } = await delivered(response);
     expect(error).not.toBeNull();
     expect(text).toContain('content_block_delta');
     expect(text).not.toContain('message_stop');
+    expect(received).toBe(written);
+  });
+
+  // A reset destroys the socket, and with it whatever the server had not yet
+  // handed to the kernel, so many resets at once are what show a lost frame.
+  it('delivers the bytes written before a reset under concurrent resets', async () => {
+    const key = useScenario('fm-fault-reset-load', { ...interrupt('reset'), name: 'interrupt-reset-load' });
+    const results = await Promise.all(Array.from({ length: 32 }, async () => await delivered(await anthropicRequest(key))));
+    expect(results.filter(result => result.error === null)).toEqual([]);
+    expect(results.filter(result => result.received !== result.written).map(({ received, written }) => ({ received, written }))).toEqual([]);
   });
 
   it('closes the connection mid-body without finishing the HTTP response', async () => {
