@@ -36,6 +36,8 @@ Every ported file names its origin in a header comment. The ports are:
 | `apps/web/src/components/sidebar/{nav.tsx,nav-selection-indicator.tsx,pages.ts}` | `apps/web/src/components/sidebar/*` | FlowMock's pages; settings in the footer; signing out offered only to a session. |
 | `apps/web/__tests__/match-media-stub.ts`, `apps/web/__tests__/components/sidebar/nav-selection-indicator_test.tsx` | `apps/web/__tests__/match-media-stub.ts`, the indicator suite of `apps/web/__tests__/winui/motion_test.tsx` | Paths only. |
 | `apps/web/src/lib/{format-time,format-duration,format-number,no-reading}.ts` | `apps/web/src/lib/*` (same names) | Adds `compactDateTime` and `formatTokens`; keeps only the number formats the pages use. |
+| `apps/web/scripts/{check-monaco-lazy,check-locales-split,check-gallery-dev-only}.ts` | same paths under `apps/web` | The gallery check looks for FlowMock's gallery route and the `@flowmock/ui` gallery module. |
+| `apps/web/src/routes.ts` (the development-only gallery route) | `apps/web/src/routes.ts` | Only the `MODE` gate and its reasoning. |
 | `apps/web/__tests__/i18n/key_usage_test.ts` | `apps/web/__tests__/i18n/key_usage_test.ts` | Takes the key helpers from `@flowmock/ui/i18n`; enumerates FlowMock's lists (fault types, end modes, frame origins, stream states, client snippets). |
 | `apps/web/src/components/monitor/live-chart.tsx` | `apps/web/src/components/performance/chart.tsx` | Plots live snapshots on a linear axis with second- or minute-rounded ticks; one value column in the callout; an area form for stacked series. |
 | `apps/web/src/routes/scenario-editor.tsx` (the leave guard only) | `apps/web/src/components/upstream-editor/page.tsx` | Guards one YAML source instead of a react-hook-form draft. |

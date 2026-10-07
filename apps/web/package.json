@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "react-router dev",
     "build": "react-router build && pnpm run check:build-output",
-    "check:build-output": "jiti scripts/check-document-shell.ts",
+    "check:build-output": "jiti scripts/check-document-shell.ts && jiti scripts/check-monaco-lazy.ts && jiti scripts/check-gallery-dev-only.ts && jiti scripts/check-locales-split.ts",
     "typecheck": "react-router typegen && tsc --noEmit"
   },
   "dependencies": {
