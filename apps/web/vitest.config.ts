@@ -9,6 +9,9 @@ export default defineConfig({
   // resolver does not read by default.
   resolve: { mainFields: ['module', 'jsnext:main', 'jsnext'] },
   test: {
+    // Every timestamp FlowMock persists is UTC; a pinned zone keeps a green run
+    // here a green run in CI.
+    env: { TZ: 'UTC' },
     include: ['__tests__/**/*_test.{ts,tsx}'],
     environment: 'happy-dom',
     setupFiles: ['./__tests__/setup.ts'],
