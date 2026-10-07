@@ -502,7 +502,6 @@ const en = {
         invalid: 'The scenario is not valid',
         unparsable: 'The YAML does not parse, so the form cannot show it. Fix it in the YAML view: {{error}}',
         nameRequired: 'Give the scenario a name.',
-        nameReserved: '“{{name}}” is the address of this page; choose another name.',
         nameTaken: 'A scenario named {{name}} already exists.',
       },
       leave: {

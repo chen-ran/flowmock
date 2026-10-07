@@ -1,3 +1,4 @@
+import type { RouteConfigEntry } from '@react-router/dev/routes';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -6,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import weakNetwork from '../../../../../examples/scenarios/weak-network-429.yaml?raw';
 import * as editor from '../../../src/routes/scenario-editor.tsx';
 import * as creator from '../../../src/routes/scenario-new.tsx';
+import routes from '../../../src/routes.ts';
 import { useAuthStore } from '../../../src/stores/auth-store.ts';
 import { renderInApp } from '../../render.tsx';
 import { OutcomeToastProvider } from '@flowmock/ui/controls/outcome-toast.tsx';
@@ -33,6 +35,9 @@ const fakeServer = async (input: RequestInfo | URL, init?: RequestInit): Promise
     saved.push({ name: decodeURIComponent(scenario[1]!), body: String(init?.body) });
     return saveResponse();
   }
+  if (scenario?.[1] === 'new') {
+    return Response.json({ name: 'new', builtIn: false, source: 'name: new\ndescription: Named like the create page\n', scenario: {}, createdAt: 0, updatedAt: 0 });
+  }
   if (scenario?.[1] === 'weak-network-429') {
     return Response.json({ name: 'weak-network-429', builtIn: false, source: weakNetwork, scenario: {}, createdAt: 0, updatedAt: 0 });
   }
@@ -42,10 +47,15 @@ const fakeServer = async (input: RequestInfo | URL, init?: RequestInit): Promise
 
 const Shell = ({ children }: { children: ReactNode }) => <OutcomeToastProvider>{children}</OutcomeToastProvider>;
 
+// The editor's addresses, read from the app's own route table.
+const flatten = (entries: readonly RouteConfigEntry[]): RouteConfigEntry[] => entries.flatMap(entry => [entry, ...flatten(entry.children ?? [])]);
+const pathOf = (file: string) => `/${flatten(routes).find(entry => entry.file === file)!.path}`;
+const CREATE_PATH = pathOf('routes/scenario-new.tsx');
+
 const renderEditor = (entry: string) => {
   const router = createMemoryRouter([
-    { path: '/scenarios/new', loader: creator.clientLoader, element: <Shell><creator.default /></Shell> },
-    { path: '/scenarios/:name', loader: editor.clientLoader, element: <Shell><editor.default /></Shell> },
+    { path: CREATE_PATH, loader: creator.clientLoader, element: <Shell><creator.default /></Shell> },
+    { path: pathOf('routes/scenario-editor.tsx'), loader: editor.clientLoader, element: <Shell><editor.default /></Shell> },
     { path: '/scenarios', element: <p>scenario list</p> },
   ], { initialEntries: [entry] });
   renderInApp(<RouterProvider router={router} />);
@@ -118,11 +128,17 @@ describe('the scenario editor', () => {
 
   it('creates a scenario from a handed-over draft and opens it under its name', async () => {
     const draft = 'name: checkout-sequence\nselection: { mode: sequence, cassette: cas_1 }\n';
-    const router = renderEditor(`/scenarios/new?draft=${encodeURIComponent(draft)}`);
+    const router = renderEditor(`${CREATE_PATH}?draft=${encodeURIComponent(draft)}`);
     expect((await screen.findByRole<HTMLInputElement>('textbox', { name: 'Name' })).value).toBe('checkout-sequence');
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(saved).toEqual([{ name: 'checkout-sequence', body: draft }]));
     await waitFor(() => expect(router.state.location.pathname).toBe('/scenarios/checkout-sequence'));
+  });
+
+  it('opens a scenario named new at its own address', async () => {
+    renderEditor('/scenarios/new');
+    expect(await screen.findByRole('heading', { name: 'new', level: 1 })).toBeTruthy();
+    expect((await screen.findByRole<HTMLInputElement>('textbox', { name: 'Description' })).value).toBe('Named like the create page');
   });
 
   it('holds a page change while edits are unsaved', async () => {

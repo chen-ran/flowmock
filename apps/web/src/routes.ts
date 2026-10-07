@@ -24,7 +24,9 @@ export default [
     route('cassettes', 'routes/cassettes.tsx'),
     route('cassettes/:id', 'routes/cassette-detail.tsx'),
     route('scenarios', 'routes/scenarios.tsx'),
-    route('scenarios/new', 'routes/scenario-new.tsx'),
+    // A scenario's name starts with a letter or a digit, so this address can
+    // never be a scenario's own.
+    route('scenarios/_new', 'routes/scenario-new.tsx'),
     route('scenarios/:name', 'routes/scenario-editor.tsx'),
     route('keys', 'routes/keys.tsx'),
     route('monitor', 'routes/monitor.tsx'),

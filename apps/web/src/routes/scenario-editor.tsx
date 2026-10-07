@@ -39,10 +39,6 @@ network:
   latencyMs: 80
 `;
 
-// The create page lives at /scenarios/new, so a scenario of that name could
-// never be opened at its own address.
-const RESERVED_NAME = 'new';
-
 export interface ScenarioEditorData {
   scenario: ScenarioDetail | null;
   source: string;
@@ -109,10 +105,6 @@ function ScenarioEditor({ loaded }: { loaded: ScenarioEditorData }) {
   const save = async () => {
     if (!name) {
       reportProblems({ message: t('scenarios.editor.nameRequired'), issues: [{ path: ['name'], message: t('scenarios.editor.nameRequired') }], position: null });
-      return;
-    }
-    if (creating && name === RESERVED_NAME) {
-      reportProblems({ message: t('scenarios.editor.nameReserved', { name }), issues: [{ path: ['name'], message: t('scenarios.editor.nameReserved', { name }) }], position: null });
       return;
     }
     setSaving(true);

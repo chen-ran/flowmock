@@ -87,7 +87,7 @@ export default function CassetteDetailPage() {
     <div><BackNavigationButton to="/cassettes">{t('nav.cassettes')}</BackNavigationButton></div>
     <DashboardPageHeader
       actions={<div className="flex flex-wrap gap-2">
-        <Button appearance="primary" onClick={() => void navigate(`/scenarios/new?draft=${encodeURIComponent(sequenceScenarioYaml(cassette))}`)}>{t('cassettes.actions.sequenceScenario')}</Button>
+        <Button appearance="primary" onClick={() => void navigate(`/scenarios/_new?draft=${encodeURIComponent(sequenceScenarioYaml(cassette))}`)}>{t('cassettes.actions.sequenceScenario')}</Button>
         <Button onClick={() => void exportCassette()}>{t('cassettes.actions.export')}</Button>
         <Button onClick={() => { setName(cassette.name); setRenaming(true); }}>{t('cassettes.actions.rename')}</Button>
         {open && <Button onClick={() => void patch({ closed: true }, t('cassettes.close.done'))}>{t('cassettes.actions.close')}</Button>}

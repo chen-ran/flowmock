@@ -492,7 +492,6 @@ const zhHans = {
         invalid: '场景无效',
         unparsable: 'YAML 无法解析，表单暂时无法显示。请在 YAML 视图中修正：{{error}}',
         nameRequired: '请为场景命名。',
-        nameReserved: '“{{name}}”是本页面的地址，请换一个名称。',
         nameTaken: '已存在名为 {{name}} 的场景。',
       },
       leave: {

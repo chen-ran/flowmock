@@ -93,7 +93,7 @@ export default function Scenarios() {
     <DashboardPageHeader
       actions={<ResourceListActions
         createLabel={t('scenarios.actions.create')}
-        onCreate={() => void navigate('/scenarios/new')}
+        onCreate={() => void navigate('/scenarios/_new')}
         onRefresh={() => void revalidator.revalidate()}
         refreshLabel={t('scenarios.refresh')}
         refreshing={revalidator.state === 'loading'}
