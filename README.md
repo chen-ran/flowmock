@@ -12,14 +12,15 @@ upstreams without spending tokens.
 Any client that talks to a standard LLM API only needs a different base URL and
 API key.
 
-> **Status:** the server is usable today: recording, replay, scenarios, the
-> admin API and metrics. There is no web UI yet; it is planned in
+> **Status:** recording, replay, scenarios, the admin API, metrics and the
+> management web app are usable today. Further work is planned in
 > [`docs/superpowers/plans`](docs/superpowers/plans).
 
 ## Contents
 
 - [Highlights](#highlights)
 - [Quick start](#quick-start)
+- [Management app](#management-app)
 - [Connecting clients](#connecting-clients)
 - [Concepts](#concepts)
 - [A typical workflow](#a-typical-workflow)
@@ -69,6 +70,7 @@ Requires Node.js 22.19 or later and pnpm 10.
 git clone https://github.com/chen-ran/flowmock.git
 cd flowmock
 pnpm install
+pnpm run build:web   # the management app, served by the server at /
 pnpm start -- --config examples/flowmock.yaml
 ```
 
@@ -98,6 +100,44 @@ curl -N http://127.0.0.1:8787/v1/chat/completions \
 The demo corpus is small, so a question it never saw is answered by sampling a
 similar recording. Record your own traffic for meaningful replays (see
 [A typical workflow](#a-typical-workflow)).
+
+## Management app
+
+Open `http://127.0.0.1:8787` once the app is built. It covers what the admin
+API does, in English and Simplified Chinese, following the system's light or
+dark scheme:
+
+- **Overview**: the corpus by protocol and outcome, the last minute of
+  replays, and the newest requests.
+- **Recordings and cassettes**: filter and search the corpus; each recording
+  shows its frames, chunks and token curve on one time axis. A cassette can be
+  exported, closed, renamed, or turned into a sequence scenario.
+- **Scenarios**: edit a scenario as a form or as YAML. The two change the same
+  document, so comments and fields the form does not cover survive. The YAML
+  editor validates against the server's schema and marks what the server
+  refuses. A preview plans any recorded or pasted request against the unsaved
+  scenario, for any seed and call number.
+- **Keys and targets**: bind mock keys to a scenario or a recording target,
+  and copy client configuration for each SDK, Claude Code and Codex.
+- **Live monitor**: TTFT and output speed at p50/p90/p99, throughput and
+  injected faults over the last ten minutes.
+- **Requests**: the timeline as it happens, filterable by mode, key, protocol,
+  status and outcome. Each request shows its selection, the fault that fired,
+  its frames by origin, planned against measured timing, provenance, and a
+  curl that replays it with the same seed.
+
+![Scenario editor](docs/images/scenario-editor.png)
+
+| | |
+|---|---|
+| ![Overview](docs/images/overview.png) | ![Live monitor](docs/images/live-monitor.png) |
+| ![Request trace](docs/images/request-trace.png) | |
+
+With `FLOWMOCK_ADMIN_KEY` set, the app asks for the key once and keeps a
+browser session; without it, the app opens directly on loopback. To work on the
+app, run the server and `pnpm --filter @flowmock/web dev`. The development
+server listens on port 5175 and proxies the API to `FLOWMOCK_DEV_SERVER`
+(default `http://127.0.0.1:8787`).
 
 ## Connecting clients
 
@@ -261,7 +301,7 @@ FlowMock answers with its own diagnostic error rather than inventing one.
 | | `FLOWMOCK_TIMELINE_PERSIST` | `0` | Store the request timeline in SQLite (`1` enables it) |
 | | `FLOWMOCK_TIMELINE_RETAIN_DAYS` | `7` | Persistent timeline retention in days |
 | | `FLOWMOCK_TIMELINE_MAX` | `100000` | Maximum persistent timeline entries |
-| | `FLOWMOCK_WEB_DIST_DIR` | `../web/dist/client` | Dashboard build directory, relative to `apps/server` |
+| | `FLOWMOCK_WEB_DIST_DIR` | `../web/dist/client` | Management app build directory, relative to `apps/server` |
 | | `FLOWMOCK_SHUTDOWN_GRACE_MS` | `10000` | Time to drain HTTP and WebSocket streams on shutdown |
 
 Without `FLOWMOCK_ADMIN_KEY` the admin API is open, so FlowMock refuses to
@@ -270,7 +310,9 @@ listen on anything but a loopback address.
 `flowmock.yaml` holds `targets`, `keys`, `scenarios` (inline), `scenarioDir`
 (a directory of scenario files) and `corpus` (exported corpus files imported at
 startup). Entries are upserted on every start; entries created through the API
-are left alone. See [`examples/flowmock.yaml`](examples/flowmock.yaml).
+are left alone. A scenario file is stored as written, comments included, unless
+its values name environment variables. See
+[`examples/flowmock.yaml`](examples/flowmock.yaml).
 
 Runtime settings also support YAML; environment variables take precedence:
 
@@ -282,10 +324,10 @@ shutdownGraceMs: 10000
 
 On SIGINT or SIGTERM, FlowMock stops accepting new work and waits for active
 streams. Exchanges cut off at the deadline are saved as `truncated` before
-SQLite closes. A second signal exits immediately. Dashboard GET/HEAD routes
-serve the static build with SPA fallback; `/assets/` files have immutable
+SQLite closes. A second signal exits immediately. The management app's GET/HEAD
+routes serve the static build with SPA fallback; `/assets/` files have immutable
 caching, while API and data-plane paths always reach the server. A missing
-dashboard build returns 503 on dashboard routes.
+build returns 503 on the app's routes.
 
 ## Inspecting replays
 
@@ -299,7 +341,8 @@ curl -s 'http://127.0.0.1:8787/api/requests?limit=5'
 
 A scenario can be tried without sending anything: the preview returns the
 recording that would be selected, the fault, every write with its time, and
-the expected TTFT and TPS.
+the expected TTFT and TPS. Pass `source` to preview unsaved YAML in place of
+the stored scenario.
 
 ```bash
 curl -s http://127.0.0.1:8787/api/scenarios/weak-network-429/preview \
@@ -329,6 +372,10 @@ curl -N http://127.0.0.1:8787/api/live \
   -H 'x-flowmock-admin-session: <token>'
 ```
 
+A refused scenario answers 400 with `error.issues` (each a `path` into the
+document and a `message`) for invalid fields, or `error.position` (`line`,
+`col`) where the text stopped being YAML.
+
 `GET /api/live` emits `snapshot` events every second with active requests,
 a ten-second completion rate, and sixty-second protocol/error/fault counts
 and TTFT/TPS quantiles. `GET /api/requests/stream` emits lightweight `request`
@@ -341,15 +388,16 @@ of admin authentication.
 | Route | Purpose |
 |---|---|
 | `POST /auth/login`, `GET /auth/me`, `DELETE /auth/session` | Login, inspect authentication and revoke the current admin session. |
+| `GET /settings` | Version, whether an admin key protects the API, and how the timeline is kept. |
 | `GET /recordings`, `GET /recordings/:id`, `GET /recordings/:id/body`, `DELETE /recordings/:id` | Browse the corpus, decoded frames included. Filters: `protocol`, `model`, `outcome`, `cassette`, `session`, `q` (case-insensitive body substring), `before` (recording id), `limit`, `offset`. |
 | `POST /recordings/delete` | Delete `{ ids: [...] }` in one database transaction, remove chunk files and return `{ deleted }`. |
 | `GET /stats` | Total recording count and body bytes, plus `byProtocol`, `byOutcome` and `byModel` groups, each with counts and bytes. |
 | `GET /cassettes`, `GET/PATCH/DELETE /cassettes/:id` | Recording sessions; `closed: true` starts a new cassette on the next request; `DELETE ?recordings=true` deletes the recordings too. |
 | `GET /scenarios`, `GET/PUT/DELETE /scenarios/:name` | Scenarios; `PUT` takes YAML or JSON. |
-| `POST /scenarios/:name/preview`, `POST /scenarios/:name/reset` | Plan a request without sending it; clear call counters and time-window epochs. |
+| `POST /scenarios/:name/preview`, `POST /scenarios/:name/reset` | Plan a request without sending it, against the stored scenario or an unsaved `source`; clear call counters and time-window epochs. |
 | `GET/POST /keys`, `DELETE /keys/:key` | Key bindings. |
-| `GET/POST /targets`, `DELETE /targets/:id` | Record targets (secrets masked). |
-| `GET /requests`, `GET /requests/:id` | Request timeline with `before`, `limit`, `mode`, `key` (key name), `protocol` and `outcome` filters. |
+| `GET/POST /targets`, `DELETE /targets/:id` | Record targets (secrets masked). A header given as `null` keeps the value stored under its name. |
+| `GET /requests`, `GET /requests/:id` | Request timeline with `before`, `limit`, `mode`, `key` (key name), `protocol`, `outcome` and `status` (`2xx`, `3xx`, `4xx`, `5xx`) filters. |
 | `GET /live`, `GET /requests/stream` | Live metrics and completed request summaries over SSE. |
 | `GET /export`, `POST /import` | Portable NDJSON corpus. |
 | `GET /schema/scenario`, `GET /transforms` | Schemas for editors. |
@@ -367,7 +415,6 @@ of admin authentication.
 
 ## Limitations
 
-- No web UI yet.
 - The request timeline defaults to the last 1000 requests in memory. Optional
   SQLite persistence keeps it across restarts, caps stored traces at 500 frame
   summaries and prunes expired entries at startup and every ten minutes.
@@ -383,7 +430,7 @@ of admin authentication.
 ## Development
 
 ```bash
-pnpm run verify   # lint, typecheck and every test
+pnpm run verify   # lint, typecheck, every test, and the web build with its output checks
 ```
 
 | Path | Responsibility |
@@ -393,6 +440,7 @@ pnpm run verify   # lint, typecheck and every test
 | `packages/test-fixtures` | Realistic recorded exchanges shared by every test suite. |
 | `packages/ui` | The browser UI foundation: Fluent UI restyled as WinUI 3, generic controls, lazily loaded editors, charts, the typed i18n boundary and the build helpers the web app uses. |
 | `apps/server` | The Node server: data plane, recording proxy, WebSocket Responses, SQLite storage, admin API. |
+| `apps/web` | The management app: a React Router SPA on `packages/ui`, built into `apps/web/dist/client` and served by `apps/server`. |
 | `examples` | Example configuration, scenarios and the demo corpus. |
 
 Integration tests bind real sockets and drive FlowMock with the official
@@ -410,8 +458,8 @@ The follow-up work is planned in [`docs/superpowers/plans`](docs/superpowers/pla
    from non-streaming recordings, token truncation, text and tool-name
    rewriting, templated responses, `previous_response_not_found`, RPM/TPM
    limits.
-3. UI package completed: the WinUI layer, controls, editors, charts and typed
-   i18n the management web app is built from. The web app itself is next.
+3. Management app completed: the WinUI-styled UI package and the web app on
+   top of it.
 4. Cross-protocol replay, multi-core load generation and a Docker image.
 
 ## License

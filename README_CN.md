@@ -6,12 +6,13 @@ FlowMock 是一个 LLM API 模拟服务，用于开发调试、鲁棒性测试�
 
 任何通过标准 LLM API 调用模型的客户端，只需要换一个 base URL 和 API key 即可接入。
 
-> **状态：** 服务端已经可以使用，包括录制、回放、场景、管理 API 和指标。目前还没有 Web UI，相关计划见 [`docs/superpowers/plans`](docs/superpowers/plans)。
+> **状态：** 录制、回放、场景、管理 API、指标和管理 Web 应用都已可用。后续计划见 [`docs/superpowers/plans`](docs/superpowers/plans)。
 
 ## 目录
 
 - [特性](#特性)
 - [快速开始](#快速开始)
+- [管理 Web 应用](#管理-web-应用)
 - [接入客户端](#接入客户端)
 - [基本概念](#基本概念)
 - [典型流程](#典型流程)
@@ -44,6 +45,7 @@ FlowMock 是一个 LLM API 模拟服务，用于开发调试、鲁棒性测试�
 git clone https://github.com/chen-ran/flowmock.git
 cd flowmock
 pnpm install
+pnpm run build:web   # 构建管理 Web 应用，由服务端在 / 提供
 pnpm start -- --config examples/flowmock.yaml
 ```
 
@@ -69,6 +71,26 @@ curl -N http://127.0.0.1:8787/v1/chat/completions \
 ```
 
 演示语料很小，没见过的问题会采样一条相近的录制来回答。要得到有意义的回放，请录制你自己的流量（见[典型流程](#典型流程)）。
+
+## 管理 Web 应用
+
+构建完成后打开 `http://127.0.0.1:8787`。它覆盖管理 API 的全部功能，提供英文和简体中文界面，并跟随系统的亮色或暗色外观：
+
+- **概览**：按协议和结果统计的语料、最近一分钟的回放，以及最新的请求。
+- **录制与 cassette**：筛选和搜索语料；每条录制在同一条时间轴上展示帧、数据块和 token 曲线。cassette 可以导出、关闭、重命名，或转换为顺序回放场景。
+- **场景**：用表单或 YAML 编辑场景。两者修改的是同一份文档，注释和表单未涵盖的字段都会保留。YAML 编辑器按服务端的 schema 校验，并内联标出服务端拒绝的位置。预览可以对任意录制或粘贴的请求、在任意种子和调用序号下，按未保存的场景生成回放计划。
+- **Key 与目标**：把 mock key 绑定到场景或录制目标，并复制各 SDK、Claude Code 和 Codex 的客户端配置。
+- **实时监控**：最近十分钟的 TTFT 与输出速度（p50/p90/p99）、吞吐和注入的故障。
+- **请求**：实时更新的请求时间线，可按模式、key、协议、状态码和结果筛选。每个请求展示选取方式、命中的故障、按来源着色的帧、计划与实测时序对比、来源记录，以及用同一种子重放的 curl 命令。
+
+![场景编辑器](docs/images/scenario-editor.png)
+
+| | |
+|---|---|
+| ![概览](docs/images/overview.png) | ![实时监控](docs/images/live-monitor.png) |
+| ![请求追踪](docs/images/request-trace.png) | |
+
+设置了 `FLOWMOCK_ADMIN_KEY` 时，应用会请求输入一次该 key 并保持浏览器会话；未设置时，应用在回环地址上直接打开。开发应用时，先启动服务端，再运行 `pnpm --filter @flowmock/web dev`：开发服务器监听 5175 端口，并把 API 请求代理到 `FLOWMOCK_DEV_SERVER`（默认 `http://127.0.0.1:8787`）。
 
 ## 接入客户端
 
@@ -203,10 +225,25 @@ faults:
 | `--data` | `FLOWMOCK_DATA_DIR` | `./data` | 数据库与录制数据块目录 |
 | `--config` | `FLOWMOCK_CONFIG` | 无 | 启动时应用的 `flowmock.yaml` |
 | | `FLOWMOCK_ADMIN_KEY` | 无 | `/api` 与 `/metrics` 的 Bearer 令牌 |
+| | `FLOWMOCK_TIMELINE_PERSIST` | `0` | 把请求时间线保存到 SQLite（`1` 开启） |
+| | `FLOWMOCK_TIMELINE_RETAIN_DAYS` | `7` | 持久化时间线的保留天数 |
+| | `FLOWMOCK_TIMELINE_MAX` | `100000` | 持久化时间线的最大条目数 |
+| | `FLOWMOCK_WEB_DIST_DIR` | `../web/dist/client` | 管理 Web 应用的构建目录，相对于 `apps/server` |
+| | `FLOWMOCK_SHUTDOWN_GRACE_MS` | `10000` | 停机时等待 HTTP 与 WebSocket 流结束的时间 |
 
 未设置 `FLOWMOCK_ADMIN_KEY` 时管理 API 不设防，因此 FlowMock 拒绝监听回环地址以外的接口。
 
-`flowmock.yaml` 包含 `targets`、`keys`、`scenarios`（内联）、`scenarioDir`（场景文件目录）和 `corpus`（启动时导入的语料导出文件）。每次启动都会写入或更新这些条目；通过 API 创建的条目不受影响。示例见 [`examples/flowmock.yaml`](examples/flowmock.yaml)。
+`flowmock.yaml` 包含 `targets`、`keys`、`scenarios`（内联）、`scenarioDir`（场景文件目录）和 `corpus`（启动时导入的语料导出文件）。每次启动都会写入或更新这些条目；通过 API 创建的条目不受影响。场景文件按原文保存（包括注释），除非其中的值引用了环境变量。示例见 [`examples/flowmock.yaml`](examples/flowmock.yaml)。
+
+运行时设置也可以写在 YAML 中，环境变量优先：
+
+```yaml
+timeline: { persist: true, retainDays: 7, maxEntries: 100000 }
+webDistDir: ../web/dist/client
+shutdownGraceMs: 10000
+```
+
+收到 SIGINT 或 SIGTERM 时，FlowMock 停止接受新请求并等待进行中的流结束；到期仍未结束的交互会在 SQLite 关闭前保存为 `truncated`。第二个信号会立即退出。管理 Web 应用的 GET/HEAD 路由提供静态构建并回退到 SPA 入口；`/assets/` 下的文件使用不可变缓存，API 与数据面路径始终交给服务端处理。缺少构建产物时，应用路由返回 503。
 
 ## 查看回放过程
 
@@ -216,7 +253,7 @@ faults:
 curl -s 'http://127.0.0.1:8787/api/requests?limit=5'
 ```
 
-场景可以在不发送任何内容的情况下试运行：预览会返回将被选中的录制、命中的故障、每次写出及其时间，以及预期的 TTFT 和 TPS。
+场景可以在不发送任何内容的情况下试运行：预览会返回将被选中的录制、命中的故障、每次写出及其时间，以及预期的 TTFT 和 TPS。传入 `source` 可以用未保存的 YAML 代替已保存的场景进行预览。
 
 ```bash
 curl -s http://127.0.0.1:8787/api/scenarios/weak-network-429/preview \
@@ -228,17 +265,34 @@ curl -s http://127.0.0.1:8787/api/scenarios/weak-network-429/preview \
 
 ## 管理 API
 
-所有路由都在 `/api` 下；设置了 `FLOWMOCK_ADMIN_KEY` 时需要携带 `Authorization: Bearer $FLOWMOCK_ADMIN_KEY`。
+所有路由都在 `/api` 下。设置了 `FLOWMOCK_ADMIN_KEY` 时，用 `Authorization: Bearer <admin-key>` 或 `x-flowmock-admin-session: <token>` 认证。`GET /api/health` 和 `POST /api/auth/login` 无需认证。登录用 `{ "key": "<admin-key>" }` 换取 `{ token, expiresAt }`，服务端只保存 token 的 SHA-256 哈希；会话有效期为滑动的七天，登出即吊销。未配置 admin key 时，回环地址上任意非空 key 都能登录，不带凭据的请求在 `/api/auth/me` 中报告为 `open`。
+
+```bash
+curl -s http://127.0.0.1:8787/api/auth/login \
+  -H 'content-type: application/json' -d '{"key":"your-admin-key"}'
+# 把返回的 token 放进 admin 会话头。
+curl -N http://127.0.0.1:8787/api/live \
+  -H 'x-flowmock-admin-session: <token>'
+```
+
+被拒绝的场景返回 400：字段无效时附带 `error.issues`（每项包含指向文档的 `path` 和 `message`），文本不是合法 YAML 时附带 `error.position`（`line`、`col`）。
+
+`GET /api/live` 每秒发送 `snapshot` 事件，包含进行中的请求数、最近十秒的完成速率，以及最近六十秒按协议统计的请求与错误数、故障数和 TTFT/TPS 分位数。`GET /api/requests/stream` 在新增追踪时发送精简的 `request` 事件。两个流每十五秒发送保活注释，并接受 `?session=<token>` 以便浏览器的 EventSource 使用；查询参数中的凭据只在这两个 GET 路由上有效。数据面请求头 `x-flowmock-session` 命名的是回放/录制会话，与管理认证无关。
 
 | 路由 | 用途 |
 |---|---|
-| `GET /recordings`、`GET /recordings/:id`、`GET /recordings/:id/body`、`DELETE /recordings/:id` | 浏览语料，包括解码后的帧。过滤参数：`protocol`、`model`、`outcome`、`cassette`、`session`、`limit`、`offset`。 |
+| `POST /auth/login`、`GET /auth/me`、`DELETE /auth/session` | 登录、查看认证方式、吊销当前管理会话。 |
+| `GET /settings` | 版本、API 是否由 admin key 保护，以及时间线的保存方式。 |
+| `GET /recordings`、`GET /recordings/:id`、`GET /recordings/:id/body`、`DELETE /recordings/:id` | 浏览语料，包括解码后的帧。过滤参数：`protocol`、`model`、`outcome`、`cassette`、`session`、`q`（不区分大小写的响应体子串）、`before`（录制 id）、`limit`、`offset`。 |
+| `POST /recordings/delete` | 在一个数据库事务中删除 `{ ids: [...] }`，移除数据块文件并返回 `{ deleted }`。 |
+| `GET /stats` | 录制总数与响应体字节数，以及 `byProtocol`、`byOutcome`、`byModel` 分组的数量与字节数。 |
 | `GET /cassettes`、`GET/PATCH/DELETE /cassettes/:id` | 录制会话；`closed: true` 使下一次请求开启新 cassette；`DELETE ?recordings=true` 同时删除其中的录制。 |
 | `GET /scenarios`、`GET/PUT/DELETE /scenarios/:name` | 场景；`PUT` 接受 YAML 或 JSON。 |
-| `POST /scenarios/:name/preview`、`POST /scenarios/:name/reset` | 不发送请求地生成回放计划；清空调用计数和时间窗口起点。 |
+| `POST /scenarios/:name/preview`、`POST /scenarios/:name/reset` | 按已保存的场景或未保存的 `source` 生成回放计划而不发送请求；清空调用计数和时间窗口起点。 |
 | `GET/POST /keys`、`DELETE /keys/:key` | Key 绑定。 |
-| `GET/POST /targets`、`DELETE /targets/:id` | 录制目标（密钥打码）。 |
-| `GET /requests`、`GET /requests/:id` | 请求时间线。 |
+| `GET/POST /targets`、`DELETE /targets/:id` | 录制目标（密钥打码）。值为 `null` 的请求头保留该名称下已保存的值。 |
+| `GET /requests`、`GET /requests/:id` | 请求时间线，过滤参数：`before`、`limit`、`mode`、`key`（key 名称）、`protocol`、`outcome`、`status`（`2xx`、`3xx`、`4xx`、`5xx`）。 |
+| `GET /live`、`GET /requests/stream` | 通过 SSE 推送的实时指标与已完成请求的摘要。 |
 | `GET /export`、`POST /import` | 可移植的 NDJSON 语料。 |
 | `GET /schema/scenario`、`GET /transforms` | 供编辑器使用的 schema。 |
 | `GET /health` | 版本与存活状态。 |
@@ -250,8 +304,7 @@ curl -s http://127.0.0.1:8787/api/scenarios/weak-network-429/preview \
 
 ## 已知限制
 
-- 还没有 Web UI。
-- 请求时间线只保存在内存中（最近 1000 个请求）。
+- 请求时间线默认在内存中保存最近 1000 个请求。可选的 SQLite 持久化使其跨重启保留，每条追踪最多保存 500 个帧摘要，过期条目在启动时和每十分钟清理一次。
 - 既没有匹配的错误录制、也没有显式 `status` 时，错误类故障会报告缺少样本，而不是合成错误。
 - 流式请求无法由非流式录制来回答。
 - Responses 的 `previous_response_id` 续写按宽松方式处理：未知 id 不会导致请求失败。
@@ -261,7 +314,7 @@ curl -s http://127.0.0.1:8787/api/scenarios/weak-network-429/preview \
 ## 开发
 
 ```bash
-pnpm run verify   # lint、类型检查和全部测试
+pnpm run verify   # lint、类型检查、全部测试，以及 Web 构建与产物检查
 ```
 
 | 路径 | 职责 |
@@ -271,6 +324,7 @@ pnpm run verify   # lint、类型检查和全部测试
 | `packages/test-fixtures` | 各测试套件共享的真实录制样本。 |
 | `packages/ui` | 浏览器端 UI 基础：重塑为 WinUI 3 风格的 Fluent UI、通用控件、懒加载的编辑器、图表、类型化 i18n 边界，以及管理 Web 应用使用的构建辅助。 |
 | `apps/server` | Node 服务端：数据面、录制代理、WebSocket Responses、SQLite 存储、管理 API。 |
+| `apps/web` | 管理 Web 应用：基于 `packages/ui` 的 React Router SPA，构建到 `apps/web/dist/client` 并由 `apps/server` 提供。 |
 | `examples` | 示例配置、场景和演示语料。 |
 
 集成测试绑定真实 socket，并使用官方 Anthropic、OpenAI 和 Google GenAI SDK 驱动 FlowMock。面向贡献者和编码 Agent 的仓库规则见 [AGENTS.md](AGENTS.md)。
@@ -279,9 +333,9 @@ pnpm run verify   # lint、类型检查和全部测试
 
 后续工作的计划见 [`docs/superpowers/plans`](docs/superpowers/plans)：
 
-1. 控制面：浏览器会话、通过 SSE 推送的实时指标、可持久化的时间线、托管 Web 应用的静态资源、优雅停机。
+1. 控制面（已完成）：浏览器会话、通过 SSE 推送的实时指标与请求事件、可选的持久化时间线、静态托管、优雅停机、类型化的客户端契约，以及语料搜索、分页和批量删除。
 2. 保真度与变换：按协议合成错误、由非流式录制合成流式响应、按 token 截断、文本与工具名改写、模板响应、`previous_response_not_found`、RPM/TPM 限流。
-3. UI 包（已完成）：管理 Web 应用所需的 WinUI 层、控件、编辑器、图表与类型化 i18n；接下来是管理 Web 应用本身。
+3. 管理 Web 应用（已完成）：WinUI 风格的 UI 包，以及基于它的 Web 应用。
 4. 跨协议回放、多核压测与 Docker 镜像。
 
 ## 许可证
