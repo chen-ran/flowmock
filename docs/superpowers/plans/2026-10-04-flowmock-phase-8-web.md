@@ -28,10 +28,10 @@
 - Modify: 根 `package.json`（`build:web`、`dev:web`；`verify` 追加 `build:web`）
 - Test: `apps/web/__tests__/root_test.tsx`
 
-- [ ] **Step 1: 写测试**：渲染 `Layout` 与一个空路由，断言 `FluentProvider` 存在、`html[lang]` 为 `en`、WinUI 样式表 `<link>` 在关键 CSS `<style>` 之后。
-- [ ] **Step 2: 确认 RED，创建脚手架。**
-- [ ] **Step 3: 构建验证**：`pnpm --filter @flowmock/web run build` 产出 `dist/client/index.html` 与带哈希的资源；用阶段 6 的静态托管启动服务端并在浏览器打开，看到启动画面后进入空白首页。
-- [ ] **Step 4: 验证并提交**：`pnpm run verify`；`git commit -am "feat(web): scaffold the management app"`
+- [x] **Step 1: 写测试**：渲染 `Layout` 与一个空路由，断言 `FluentProvider` 存在、`html[lang]` 为 `en`、WinUI 样式表 `<link>` 在关键 CSS `<style>` 之后。
+- [x] **Step 2: 确认 RED，创建脚手架。**
+- [x] **Step 3: 构建验证**：`pnpm --filter @flowmock/web run build` 产出 `dist/client/index.html` 与带哈希的资源；用阶段 6 的静态托管启动服务端并在浏览器打开，看到启动画面后进入空白首页。
+- [x] **Step 4: 验证并提交**：`pnpm run verify`；`git commit -am "feat(web): scaffold the management app"`
 
 ---
 
@@ -47,8 +47,8 @@
 - 请求头 `x-flowmock-admin-session: <token>`；SSE 连接以 `?session=<token>` 传递。
 - `/api/auth/me` 返回 `{via: 'open'}` 时跳过登录页（本地无管理密钥模式）。
 
-- [ ] **Step 1: 写测试**（用 `vi.stubGlobal('fetch', …)` 模拟：登录成功写入 token；401 清除 token 并导航到 `/login`；`open` 模式直接进入首页）。
-- [ ] **Step 2: 确认 RED，实现，浏览器验证（错误密钥显示本地化错误、成功后进入首页），提交**：`git commit -am "feat(web): sign in with the admin key"`
+- [x] **Step 1: 写测试**（用 `vi.stubGlobal('fetch', …)` 模拟：登录成功写入 token；401 清除 token 并导航到 `/login`；`open` 模式直接进入首页）。
+- [x] **Step 2: 确认 RED，实现，浏览器验证（错误密钥显示本地化错误、成功后进入首页），提交**：`git commit -am "feat(web): sign in with the admin key"`
 
 ---
 
@@ -63,8 +63,8 @@
 
 导航结构：概览 `/`、语料 `/corpus`、Cassette `/cassettes`、场景 `/scenarios`、Key 与目标 `/keys`、实时监控 `/monitor`、请求时间线 `/requests`、设置 `/settings`。设置页：语言（en / 简体中文，存偏好）、服务端版本（`/api/health`）、时间线持久化状态、退出登录。
 
-- [ ] **Step 1: 写测试（导航高亮当前页；切换语言后文案变化且偏好持久化；退出登录清除 session）。**
-- [ ] **Step 2: 确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): add the shell, navigation and settings"`
+- [x] **Step 1: 写测试（导航高亮当前页；切换语言后文案变化且偏好持久化；退出登录清除 session）。**
+- [x] **Step 2: 确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): add the shell, navigation and settings"`
 
 ---
 
@@ -82,9 +82,9 @@
 - 详情页：请求（头与体，用 `body-editor` 只读展示）、响应元数据、特征摘要、**帧时间轴**（横轴毫秒，每帧一个刻度，内容帧与非内容帧不同样式，错误帧突出显示，悬停显示事件名与 raw 前 200 字符）、**块时间轴**（每个到达块一个刻度，高度表示字节数）、**token 随时间曲线**（按 `contentChars` 比例把 `features.outputTokens` 分摊到内容帧后累计，曲线与 TTFT/TPS 标注一致）。
 - `token-curve.ts` 的分摊算法与 `packages/core` 的 `allocateTokens` 相同——直接从 `@flowmock/core` 类型安全地导入该纯函数会把 core 拉进前端包，因此在服务端 `GET /api/recordings/:id` 的响应中增加 `frames[].tokens` 字段（服务端调用 `allocateTokens`），前端只画图。为此本任务包含对 `apps/server/src/control/routes.ts` 的小改动及其测试。
 
-- [ ] **Step 1: 服务端补 `frames[].tokens`（先写 `control_test.ts` 断言，RED → 实现 → GREEN）。**
-- [ ] **Step 2: 写前端组件测试**（列表筛选写入 URL；帧时间轴按 `t` 排列且错误帧有 `data-error`；曲线终点等于 `outputTokens`）。
-- [ ] **Step 3: 确认 RED，实现，浏览器验证（用 `examples/demo-corpus.generated.ndjson` 导入的数据），提交**：`git commit -am "feat(web): browse recordings with frame and token timelines"`
+- [x] **Step 1: 服务端补 `frames[].tokens`（先写 `control_test.ts` 断言，RED → 实现 → GREEN）。**
+- [x] **Step 2: 写前端组件测试**（列表筛选写入 URL；帧时间轴按 `t` 排列且错误帧有 `data-error`；曲线终点等于 `outputTokens`）。
+- [x] **Step 3: 确认 RED，实现，浏览器验证（用 `examples/demo-corpus.generated.ndjson` 导入的数据），提交**：`git commit -am "feat(web): browse recordings with frame and token timelines"`
 
 ---
 
@@ -96,7 +96,7 @@
 
 列表：名称、创建时间、key、目标、session、录制数、是否关闭。详情：按序号排列的录制（序号、时间间隔、outcome、stop reason），操作：重命名、关闭（下次请求开新 cassette）、导出（`/api/export?cassette=`，浏览器下载 `.ndjson`）、删除（可选连同录制）、“用此 cassette 创建顺序回放场景”（生成 `selection: { mode: sequence, cassette: <id> }` 的 YAML 并跳转到场景编辑器）。
 
-- [ ] **Step 1: 写测试，确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): manage cassettes and turn one into a sequence scenario"`
+- [x] **Step 1: 写测试，确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): manage cassettes and turn one into a sequence scenario"`
 
 ---
 
@@ -108,8 +108,8 @@
 
 要点：key 绑定 `record: <target>` 或 `replay: <scenario>` 二选一（表单用 `choice-group`）；目标头部的密钥用 `secret-input` 输入，列表只显示服务端返回的掩码；“客户端配置”为每个 key 生成可复制片段：Anthropic SDK、OpenAI SDK、Google GenAI SDK、curl、Claude Code（`ANTHROPIC_BASE_URL` 与 `ANTHROPIC_API_KEY`）、Codex（`~/.codex/config.toml` 的 `model_providers` 段，`wire_api = "responses"`），基地址取 `window.location.origin`。
 
-- [ ] **Step 1: 写测试（片段中的基地址与 key 正确；OpenAI 片段带 `/v1`；目标表单拒绝非 http(s) URL）。**
-- [ ] **Step 2: 确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): bind keys, configure targets and copy client snippets"`
+- [x] **Step 1: 写测试（片段中的基地址与 key 正确；OpenAI 片段带 `/v1`；目标表单拒绝非 http(s) URL）。**
+- [x] **Step 2: 确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): bind keys, configure targets and copy client snippets"`
 
 ---
 
@@ -126,11 +126,11 @@
 - 预览：`sample-request-picker` 从语料中挑一条录制的请求（或粘贴 JSON 与路径），调用 `POST /api/scenarios/:name/preview`（未保存的修改先用 `PUT` 到临时名 `__preview__<随机>`，预览后删除；或在阶段 6 中为 preview 增加 `source` 字段直接传 YAML——**本任务选择后者**，并包含对服务端的小改动与测试）。展示选中的录制与选取方式、命中的故障、provenance 列表、计划写入时间轴（与 Task 4 的帧时间轴共用组件，内容写入与非内容写入不同样式，标出 `expected.ttftMs`、结束动作）、预期 TTFT/TPS。种子与调用序号可调，便于观察“第 3 次调用 429”这类规则。
 - 保存：`PUT /api/scenarios/:name`（body 为 YAML 文本），服务端校验错误以内联标记显示在 Monaco 中（错误消息里的路径映射到 YAML 节点位置）。
 
-- [ ] **Step 1: 服务端 `preview` 支持 `source`（YAML 文本）——写 `control_test.ts` 用例：未保存的 YAML 预览得到与保存后相同的结果；非法 YAML 返回 400 与路径。RED → 实现 → GREEN。**
-- [ ] **Step 2: 写 `form-model_test.ts`**：对 `examples/scenarios/weak-network-429.yaml` 往返（`scenarioToForm` → `applyForm` 不改任何值）后文本逐字节相同；修改 `timing.tps.mean` 后只有该行变化且注释保留。
-- [ ] **Step 3: 写其余组件测试，确认 RED，实现。**
-- [ ] **Step 4: 浏览器验证**：编辑 `weak-network-429`，切换调用序号 3 时预览显示 429 与样本录制；非法值显示内联错误；生产构建下首屏不加载 Monaco（网络面板确认）。
-- [ ] **Step 5: 验证并提交**：`git commit -am "feat(web): edit scenarios as YAML or forms and preview their plans"`
+- [x] **Step 1: 服务端 `preview` 支持 `source`（YAML 文本）——写 `control_test.ts` 用例：未保存的 YAML 预览得到与保存后相同的结果；非法 YAML 返回 400 与路径。RED → 实现 → GREEN。**
+- [x] **Step 2: 写 `form-model_test.ts`**：对 `examples/scenarios/weak-network-429.yaml` 往返（`scenarioToForm` → `applyForm` 不改任何值）后文本逐字节相同；修改 `timing.tps.mean` 后只有该行变化且注释保留。
+- [x] **Step 3: 写其余组件测试，确认 RED，实现。**
+- [x] **Step 4: 浏览器验证**：编辑 `weak-network-429`，切换调用序号 3 时预览显示 429 与样本录制；非法值显示内联错误；生产构建下首屏不加载 Monaco（网络面板确认）。
+- [x] **Step 5: 验证并提交**：`git commit -am "feat(web): edit scenarios as YAML or forms and preview their plans"`
 
 ---
 
@@ -142,8 +142,8 @@
 
 `use-live.ts` 订阅 `/api/live`（`EventSource`，`?session=`），在内存中保留最近 10 分钟的快照用于画图，断线后指数退避重连并在页面上提示；页面在不可见时暂停订阅（复用 `use-poll-while-visible` 的可见性逻辑）。图表：TTFT p50/p90/p99、TPS p50/p90/p99、RPS 与活跃请求数、按类型堆叠的故障计数，全部使用 `@flowmock/ui/charts/*`。
 
-- [ ] **Step 1: 写测试（用假 `EventSource` 推送快照，断言缓冲窗口裁剪、重连退避、隐藏时关闭连接）。**
-- [ ] **Step 2: 确认 RED，实现，浏览器验证（对 `fm-demo-weak-network` 循环发请求时曲线变化），提交**：`git commit -am "feat(web): monitor live TTFT, TPS and faults"`
+- [x] **Step 1: 写测试（用假 `EventSource` 推送快照，断言缓冲窗口裁剪、重连退避、隐藏时关闭连接）。**
+- [x] **Step 2: 确认 RED，实现，浏览器验证（对 `fm-demo-weak-network` 循环发请求时曲线变化），提交**：`git commit -am "feat(web): monitor live TTFT, TPS and faults"`
 
 ---
 
@@ -155,7 +155,7 @@
 
 列表通过 `/api/requests/stream` 实时追加（可暂停），筛选：模式、key、协议、状态、outcome。详情：请求元数据、选取方式（exact/prefix/sequence/sample 及其参数）、命中的故障规则、provenance、帧时间轴（按 `origin` 着色：recorded / rewritten / reencoded / collected / injected / synthesized，图例本地化）、计划与实测对比（`expected` 对 `result.achievedTtftMs`、`achievedTps`、`endedAt`）、种子与 session（附“用此种子重放”的 curl 片段，带 `x-flowmock-seed`、`x-flowmock-session`）。
 
-- [ ] **Step 1: 写测试，确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): inspect every replay's trace and timing"`
+- [x] **Step 1: 写测试，确认 RED，实现，浏览器验证，提交**：`git commit -am "feat(web): inspect every replay's trace and timing"`
 
 ---
 
@@ -165,7 +165,7 @@
 - Create: `apps/web/src/routes/index.tsx`（语料统计 `/api/stats`、实时摘要卡片、最近 10 条请求）
 - Create: `apps/web/__tests__/i18n/{parity_test.ts,key_usage_test.ts}`（移植 Floway 思路：每个英文键都被源码使用；源码里的字面量键都存在；zh-Hans 与 en 结构等价，使用 `@flowmock/ui/i18n` 的 `assertLocaleParity`）
 
-- [ ] **Step 1: 写测试，确认 RED，实现，提交**：`git commit -am "feat(web): add the overview page and locale completeness checks"`
+- [x] **Step 1: 写测试，确认 RED，实现，提交**：`git commit -am "feat(web): add the overview page and locale completeness checks"`
 
 ---
 
@@ -175,9 +175,9 @@
 - Create: `apps/web/scripts/{check-monaco-lazy.ts,check-locales-split.ts,check-gallery-dev-only.ts}`（参考 Floway 同名脚本）
 - Modify: `apps/web/package.json`（`build` 链接 `check:build-output`）、根 `package.json`
 
-- [ ] **Step 1: 写脚本**：入口 chunk 与其静态依赖中不得出现 `monaco-editor`；`en` 与 `zh-Hans` 各自是独立 chunk；生产构建不包含 gallery 模块。
-- [ ] **Step 2: 故意在入口静态导入 Monaco，确认检查失败（RED）；撤销后通过。**
-- [ ] **Step 3: 提交**：`git commit -am "build(web): assert lazy Monaco, split locales and a gallery-free bundle"`
+- [x] **Step 1: 写脚本**：入口 chunk 与其静态依赖中不得出现 `monaco-editor`；`en` 与 `zh-Hans` 各自是独立 chunk；生产构建不包含 gallery 模块。
+- [x] **Step 2: 故意在入口静态导入 Monaco，确认检查失败（RED）；撤销后通过。**
+- [x] **Step 3: 提交**：`git commit -am "build(web): assert lazy Monaco, split locales and a gallery-free bundle"`
 
 ---
 
@@ -186,11 +186,32 @@
 **Files:**
 - Modify: `README.md`（管理平台章节、截图、`pnpm run build:web` 与托管方式）、`AGENTS.md`（Index 增加 `apps/web`、`packages/ui`；Requirements 增加 Fluent 与 i18n 边界）
 
-- [ ] **Step 1: 更新文档，`pnpm run verify` 通过后提交**：`git commit -am "docs: document the management app"`
+- [x] **Step 1: 更新文档，`pnpm run verify` 通过后提交**：`git commit -am "docs: document the management app"`
 
 ---
 
 ## 阶段验收
 
-- [ ] `pnpm run verify`（含 `build:web` 与产物检查）通过。
-- [ ] 从零开始：`pnpm install && pnpm run build:web && pnpm start -- --config examples/flowmock.yaml`，浏览器打开 `http://127.0.0.1:8787`，完成“登录 → 查看语料详情 → 编辑并预览场景 → 用 key 片段发请求 → 在时间线与实时监控中看到它”的完整流程，en 与 zh-Hans、亮暗主题各走一遍。
+- [x] `pnpm run verify`（含 `build:web` 与产物检查）通过。
+- [x] 从零开始：`pnpm install && pnpm run build:web && pnpm start -- --config examples/flowmock.yaml`，浏览器打开 `http://127.0.0.1:8787`，完成“登录 → 查看语料详情 → 编辑并预览场景 → 用 key 片段发请求 → 在时间线与实时监控中看到它”的完整流程，en 与 zh-Hans、亮暗主题各走一遍。
+
+## 实施记录（2026-10-07）
+
+- 各任务分别提交在 `claude/phase-8-web`（`4597ff6` 至 `d0929fd`，共 12 个提交）；Floway 参考修订仍为 `c7e4d782763b010e44ba243588f2c83c90c97335`。根 `pnpm run verify` 在本地 Node 24.14.1 通过：95 个测试文件、494 个测试，`build:web` 之后的四项产物检查（文档外壳、Monaco 懒加载、语言包拆分、画廊仅限开发）全部通过；三项新检查都先在故意破坏的构建上确认失败。
+- **阶段验收**：在全新数据目录、设置 admin key 的 8787 端口上，用 Chrome 走完“登录 → 录制详情 → 在表单中改延迟并预览第 3 次调用得到 429 → 保存 → 从 key 的 curl 片段发请求 → 请求出现在时间线顶部、实时监控计入”，en/亮色与 zh-Hans/暗色各一遍；保存后的场景源文件只有被改的值变化，注释与 flow 写法保持原样。
+- **服务端配套改动**（均带测试）：`GET /api/settings`；录制详情的帧带 `tokens` 与 `tokensEstimated`；`DELETE /cassettes/:id` 校验 `?recordings=`；目标请求头取值 `null` 表示保留已存的值；预览接受 `source`（任务 7 选择此方案而非临时场景名）；`ConfigError` 携带 `issues`（路径与消息）与 YAML 语法错误的 `position`，经 400 响应返回；`scenarioDir` 中的场景文件按原文保存（含注释），只有引用了环境变量的文件才按展开后的值重新序列化；请求时间线增加 `status`（`2xx`…`5xx`）过滤，SSE 请求摘要增加 `model` 与 `durationMs`。
+- **范围调整**：
+  - 外观跟随系统配色，不提供亮暗切换（与 Floway 一致）。
+  - 场景编辑：新建页是 `/scenarios/new`（独立路由模块 `scenario-new.tsx` 复用编辑器），因此界面拒绝新建名为 `new` 的场景；表单另含名称与说明。`applyForm` 对已有标量逐字节原位替换；结构变化经 yaml Document 修改，并让每个 flow 集合保留原有的内边距写法，表单新增的纯值集合写成单行 flow；故障规则的增删按位置原地进行。`@flowmock/ui` 的 `yaml-editor` 增加 `markers`，用于显示服务端拒绝的位置。
+  - 实时监控与请求流共用 `lib/use-server-events.ts`（会话令牌走 `?session=`，断线后 1 s 起指数退避至 30 s，页面隐藏时断开）；图表由移植自 Floway 性能图的 `live-chart.tsx` 绘制，`apps/web` 因此直接依赖 `@fluentui/react-charts@9.3.22`。
+  - 请求列表按开始时间排序（流在请求结束时才推送）；“用此种子重放”的 curl 以 `--data @request.json` 读取请求体，因为追踪不保存客户端请求体。
+  - 帧时间轴的刻度可带颜色，按 origin 着色；预览计划与请求追踪共用 `timeline-moments.tsx` 的时刻线与图例。
+  - i18n：`parity_test.ts` 用 `assertLocaleParity` 校验每个可加载的语言包；`key_usage_test.ts` 移植自 Floway，并对故障类型、结束方式、帧来源、流状态与客户端片段的枚举逐一核对。
+  - 开发模式下 `/winui-gallery` 挂载 `@flowmock/ui/gallery`；生产构建不含该路由与画廊模块。
+  - 偏离 Floway 的一处修正：WinUI 层的 Field 标签在 `:has(:disabled)` 时变灰，SpinButton 处于边界时其步进按钮被禁用，会误把标签变灰；规则现排除这两个按钮（见 `packages/ui/src/winui/controls/field.css.ts` 与 NOTICE）。
+  - `README_CN.md` 同步补上此前落后的控制面内容。
+- **已知遗留（不属于本阶段）**：
+  - `apps/server/__tests__/faults_test.ts` 的 “resets the connection mid-stream” 在整套测试负载下偶发失败，单独运行 15 次全部通过。
+  - 根 `vitest.config.ts` 的 `test.env.TZ` 不会传到各包的 project 配置。
+  - 开发模式（StrictMode 双挂载）下打开 YAML 编辑器会出现 Monaco 的 `Canceled` 未处理拒绝，生产构建不出现；Floway 同样未处理。
+
