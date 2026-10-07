@@ -210,8 +210,8 @@
   - 开发模式下 `/winui-gallery` 挂载 `@flowmock/ui/gallery`；生产构建不含该路由与画廊模块。
   - 偏离 Floway 的一处修正：WinUI 层的 Field 标签在 `:has(:disabled)` 时变灰，SpinButton 处于边界时其步进按钮被禁用，会误把标签变灰；规则现排除这两个按钮（见 `packages/ui/src/winui/controls/field.css.ts` 与 NOTICE）。
   - `README_CN.md` 同步补上此前落后的控制面内容。
-- **已知遗留（不属于本阶段）**：
-  - `apps/server/__tests__/faults_test.ts` 的 “resets the connection mid-stream” 在整套测试负载下偶发失败，单独运行 15 次全部通过。
-  - 根 `vitest.config.ts` 的 `test.env.TZ` 不会传到各包的 project 配置。
-  - 开发模式（StrictMode 双挂载）下打开 YAML 编辑器会出现 Monaco 的 `Canceled` 未处理拒绝，生产构建不出现；Floway 同样未处理。
+- **已知遗留（不属于本阶段，已在之后的提交中修复）**：
+  - `apps/server/__tests__/faults_test.ts` 的 “resets the connection mid-stream” 在负载下偶发失败。根因是 reset 故障在执行器排队完最后一次写入后立即销毁 socket，丢掉了 Node 还没交给内核的字节：32 个并发 reset 时，320 次里有 267 次客户端少收字节，测试只在中断点前的 delta 全部丢失时才失败。现在 RST 等 Node 把已写字节交给内核后再发，测试改为断言客户端收到全部已写字节（`4c0b00a`）。
+  - `TZ=UTC` 只在从仓库根目录运行 Vitest 时生效，在包目录里直接运行会用本机时区；现在每个包的测试配置各自固定时区（`73f588e`）。
+  - Monaco 编辑器销毁时，其 WordHighlighter 留下未处理的 `Canceled` 拒绝；开发模式的 StrictMode 双挂载必然触发，生产中刚输入完就切换视图也会触发。现在只丢弃 Monaco 自己的取消错误（`707ec52`）。
 
