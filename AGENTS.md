@@ -27,6 +27,7 @@
 | Category | Entry | Overview |
 |---|---|---|
 | CI | `.github/workflows/verify.yaml` | Runs `pnpm run verify` on Node 22 and 24. |
+| Docs | `docs/reference.md` | Concepts, the scenario format, configuration, the admin API, storage and known limitations; `reference_CN.md` in Chinese. |
 | Docs | `docs/superpowers/plans` | Post-MVP implementation plans. |
 | Examples | `examples` | Example configuration, scenarios and the demo corpus. |
 | Package | `apps/server` | Serves the data plane, recording proxy and admin API on Node. |
