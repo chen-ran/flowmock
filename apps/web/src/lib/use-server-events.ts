@@ -6,7 +6,8 @@ const MAX_RECONNECT_DELAY_MS = 30_000;
 
 export const reconnectDelay = (attempt: number): number => Math.min(MAX_RECONNECT_DELAY_MS, 1000 * 2 ** attempt);
 
-export type StreamStatus = 'connecting' | 'live' | 'reconnecting' | 'paused';
+export const STREAM_STATUSES = ['connecting', 'live', 'reconnecting', 'paused'] as const;
+export type StreamStatus = typeof STREAM_STATUSES[number];
 
 export type EventSourceFactory = (url: string) => EventSource;
 

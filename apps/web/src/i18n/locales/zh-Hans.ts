@@ -291,6 +291,38 @@ const zhHans = {
       },
       signOutDescription: '结束此浏览器的会话。',
     },
+    overview: {
+      description: '语料中有什么、此刻在回放什么，以及最新的请求。',
+      refresh: '刷新概览',
+      loadFailed: '无法加载概览',
+      corpus: {
+        title: '语料',
+        description: '已录制的交互，按协议和结束方式统计。',
+        browse: '浏览录制',
+        recordings: '录制',
+        bytes: '已存储的正文',
+        protocols: '协议',
+        models: '模型',
+        protocol: '协议',
+        outcome: '结果',
+        byProtocol: '按协议统计的录制',
+        byOutcome: '按结果统计的录制',
+        empty: {
+          title: '语料为空',
+          description: '把 key 绑定到录制目标并让流量经过它，或导入语料文件。',
+        },
+      },
+      live: {
+        title: '此刻',
+        description: '最近一分钟的回放。',
+        open: '打开实时监控',
+      },
+      recent: {
+        title: '最新请求',
+        description_other: '经过 mock key 的最新 {{count, count}} 个请求。',
+        all: '全部请求',
+      },
+    },
     monitor: {
       description: '实时回放：首 token 时间、输出速度、吞吐和注入的故障，每个点统计最近一分钟，显示最近十分钟。',
       series: '序列',

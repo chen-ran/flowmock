@@ -4,20 +4,7 @@ import { formatDuration } from '../../lib/format-duration.ts';
 import { formatNumber, formatTokenRate } from '../../lib/format-number.ts';
 import { NO_READING } from '../../lib/no-reading.ts';
 import { useLocale } from '../../lib/use-locale.ts';
-import { Panel } from '@flowmock/ui/controls/panel.tsx';
-import { fluentComponents } from '@flowmock/ui/fluent';
-
-const { Text } = fluentComponents;
-
-// The type of Floway's usage summary tiles, read-only here.
-function Tile({ label, value }: { label: string; value: string }) {
-  return <Panel className="!py-2 !px-3 min-h-[62px]">
-    <span className="grid gap-1 min-w-0">
-      <Text className="text-fui-fg2" size={200} weight="semibold">{label}</Text>
-      <Text className="tabular-nums [overflow-wrap:anywhere]" size={500} weight="semibold">{value}</Text>
-    </span>
-  </Panel>;
-}
+import { StatTile as Tile } from '../stat-tile.tsx';
 
 // The newest snapshot at a glance.
 export function SummaryCards({ snapshot }: { snapshot: LiveSnapshot | undefined }) {

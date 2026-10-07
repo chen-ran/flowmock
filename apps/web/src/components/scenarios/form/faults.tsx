@@ -2,7 +2,7 @@ import { Add20Regular, Delete20Regular } from '@fluentui/react-icons';
 import { useState } from 'react';
 
 import { NumberField } from './fields.tsx';
-import { callIndexText, type FaultRuleForm, type FaultType, parseCallIndex } from './model.ts';
+import { callIndexText, FAULT_TYPES, type FaultRuleForm, type FaultType, parseCallIndex } from './model.ts';
 import { useTranslation } from '../../../i18n/translation.ts';
 import { Dropdown, Input } from '@flowmock/ui/controls/fluent-form-controls.tsx';
 import { TooltipIconButton } from '@flowmock/ui/controls/tooltip-icon-button.tsx';
@@ -11,7 +11,6 @@ import { fluentComponents } from '@flowmock/ui/fluent';
 const { Button, Field, Option, Text } = fluentComponents;
 
 const GRID_CLASS = 'grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3';
-const TYPES: readonly FaultType[] = ['http_error', 'stream_error_event', 'interrupt', 'concurrency_limit'];
 const INTERRUPT_MODES = ['reset', 'abort', 'fin', 'hang', 'ws_close', 'ws_terminate'] as const;
 // The types that can take their error from a recording.
 const FROM_RECORDING: ReadonlySet<FaultType> = new Set(['http_error', 'stream_error_event', 'concurrency_limit']);
@@ -106,7 +105,7 @@ function FaultRule({ index, onChange, onRemove, rule }: { index: number; onChang
           selectedOptions={[inject.type]}
           value={t(`scenarios.form.faults.types.${inject.type}`)}
         >
-          {TYPES.map(type => <Option key={type} value={type}>{t(`scenarios.form.faults.types.${type}`)}</Option>)}
+          {FAULT_TYPES.map(type => <Option key={type} value={type}>{t(`scenarios.form.faults.types.${type}`)}</Option>)}
         </Dropdown>
       </Field>
       {inject.type === 'http_error' && <>

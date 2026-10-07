@@ -25,7 +25,8 @@ export interface NetworkForm {
   stalls?: { probability?: number; durationMs?: [number, number] };
 }
 
-export type FaultType = 'http_error' | 'stream_error_event' | 'interrupt' | 'concurrency_limit';
+export const FAULT_TYPES = ['http_error', 'stream_error_event', 'interrupt', 'concurrency_limit'] as const;
+export type FaultType = typeof FAULT_TYPES[number];
 
 export interface FaultRuleForm {
   when?: { callIndex?: number | number[] | { from?: number; to?: number }; everyN?: number; probability?: number; [key: string]: unknown };

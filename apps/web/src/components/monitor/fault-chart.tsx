@@ -3,8 +3,8 @@ import type { LiveSnapshot } from './use-live.ts';
 import { useTranslation } from '../../i18n/translation.ts';
 import { formatNumber } from '../../lib/format-number.ts';
 import { useLocale } from '../../lib/use-locale.ts';
+import { FAULT_TYPES } from '../scenarios/form/model.ts';
 
-const FAULT_TYPES = ['http_error', 'stream_error_event', 'interrupt', 'concurrency_limit'] as const;
 const FAULT_HUES = { http_error: 28, stream_error_event: 75, interrupt: 300, concurrency_limit: 200 } as const;
 
 // Faults injected over the last minute, stacked by type. Only the types seen

@@ -13,6 +13,9 @@ export interface PlanMoment {
   color: string;
 }
 
+// How a response can end, as core's EndMode names it.
+export const END_MODES = ['complete', 'fin', 'abort', 'reset', 'hang', 'ws_close', 'ws_terminate'] as const;
+
 const ABNORMAL_ENDS: ReadonlySet<string> = new Set(['abort', 'reset', 'hang', 'ws_terminate']);
 
 export const planMoments = (plan: PreviewPlan): PlanMoment[] => [

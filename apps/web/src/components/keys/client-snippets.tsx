@@ -5,7 +5,8 @@ import { ChoiceGroup } from '@flowmock/ui/controls/choice-group.tsx';
 import { CodeBlock } from '@flowmock/ui/controls/code-block.tsx';
 import { useCopyToClipboard } from '@flowmock/ui/controls/use-copy-to-clipboard.ts';
 
-export type SnippetId = 'anthropic' | 'openai' | 'gemini' | 'curl' | 'claude-code' | 'codex';
+export const SNIPPET_IDS = ['anthropic', 'openai', 'gemini', 'curl', 'claude-code', 'codex'] as const;
+export type SnippetId = typeof SNIPPET_IDS[number];
 
 export interface ClientSnippet {
   id: SnippetId;
